@@ -1,93 +1,192 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-S2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- |
+# ESP Multitool
 
-# Example: GPIO
+Since I have a couple of 10 year old beaglebone blacks that I want to put to live again, I decided to add a 3$ ESP32s3 and 1$ RF433 receiver/sender plus a usb-audio interface that I had in a drawer.
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+This gives me a cheap and good interface to enable apple-airplay (shairport-sync) speakers on an ancient sound system and to replace / centralize the cheap 433mhz power outlet switches that are floating around.
 
-This test code shows how to configure GPIO and how to use it with interruption.
+I use a "hand-wire-wrapped" bread board on the beaglebone (picture). Essentially except for the ESP32S3 and the cheap 433mhz receiver/transmitter there are no further parts involved. (you need a voltage divder (2K & 3K) though  to go from the 5V rf433 receiver to the 3.3v EPS GPIO's)
 
-## GPIO functions:
+## Features
 
-| GPIO                         | Direction | Configuration                                          |
-| ---------------------------- | --------- | ------------------------------------------------------ |
-| CONFIG_GPIO_OUTPUT_0         | output    |                                                        |
-| CONFIG_GPIO_OUTPUT_1         | output    |                                                        |
-| CONFIG_GPIO_INPUT_0          | input     | pulled up, interrupt from rising edge and falling edge |
-| CONFIG_GPIO_INPUT_1          | input     | pulled up, interrupt from rising edge                  |
+ - A wifi ip-tunnel interface to linux using the ESP32-wifi
+   (for performance SPI & UART are used simultaniously giving ~3.5 mbit transferrate)
+   to make the beaglebone **wireless**
 
-## Test:
- 1. Connect CONFIG_GPIO_OUTPUT_0 with CONFIG_GPIO_INPUT_0
- 2. Connect CONFIG_GPIO_OUTPUT_1 with CONFIG_GPIO_INPUT_1
- 3. Generate pulses on CONFIG_GPIO_OUTPUT_0/1, that triggers interrupt on CONFIG_GPIO_INPUT_0/1
+ - A webServer that capturing and sending of RF433 wireless commands 
+  to replace cheap 433mhz remote controls and enable to programaticaly switch the **power outlets**...
 
- **Note:** The following pin assignments are used by default, you can change them by `idf.py menuconfig` > `Example Configuration`.
+ - A simple UART-wifi interface that allows devices like the beaglebone boot-uart 
+   to enable boot-debugging on **wireless beagleboneblack**"
 
-|                        | CONFIG_GPIO_OUTPUT_0 | CONFIG_GPIO_OUTPUT_1 | CONFIG_GPIO_INPUT_0 | CONFIG_GPIO_INPUT_1 |
-| ---------------------- | -------------------- | -------------------- | ------------------- | ------------------- |
-| ESP32C2/ESP32H2/ESP32H4| 8                    | 9                    | 4                   | 5                   |
-| All other chips        | 18                   | 19                   | 4                   | 5                   |
+ - A simple wifi interface that allows devices like the beaglebone to be reset (gpio-toggle)
+     - Obviously have (some) authentication ( for the above uart/reset )
 
-## How to use example
 
-Before project configuration and build, be sure to set the correct chip target using `idf.py set-target <chip_name>`.
+# Status
 
-### Hardware Required
+ - spi/uart tunnel working as a separate esp image
 
-* A development board with any Espressif SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
-* A USB cable for Power supply and programming
-* Some jumper wires to connect GPIOs.
+ - rf433/reset/uart working as a separate esp image
+ - Capturing of rf433 signals using command line interface and small tools on a PC
 
-### Configure the project
+# Content
+        esptunnel       - ESP32 firmware that tunnels IP through SPI & UART to a beaglebone
+        linux           - The beaglebone side of the tunnel
+        rf433           - ESP32 webinterface/uart-interface
 
-### Build and Flash
 
-Build the project and flash it to the board, then run the monitor tool to view the serial output:
+ - Currently configured HW/connections
 
-Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
+      
+ BBK Header| Pin| Connection| ESP32s3 Pin| ESP32s3 Function
+--:|:-----:|:-----|:-----|:-----
+P9 | 1/2|         GND
+P9 | 3/4|         VCC 5V
+P9 | 56/|         VDD 3.3V
+P9 | 19| D17      uart1_rtsn|  23| IO15 I/O CTS
+P9 | 20| D18      uart1_ctsn|  13| IO14 I/O RTS
+P9 | 24| D15      UART1_TXD|   27| IO16 I/O U2RXD
+P9 | 26| D16      UART1_RXD|   28| IO17 I/O U2TXD
+P9 | 23| V14      GPIO1_17|    3| EN I Module-enable signal. Active high.
+P9 | 25| A14      GPIO3_21*|   25| IO0 I/O GPIO0 - doubles as SPI-ACK from ESP
+P9 | 22| A17      UART2_RXD|   35| TXD0 I/O GPIO1
+P9 | 21| B17      UART2_TXD|   34| RXD0 I/O GPIO3
+P9 | 28| C12     SPI1_CS0  |  xx | CS I/O
+P9 | 29| B13     SPI1_D0   |  xx | DI
+P9 | 30| D12     SPI1_D1   |  xx | DO
+P9 | 31| A13     SPI1_SCLK |  xx | SCLK
+P? |  ?|  RESET            |  xx | GPIO?
+P? |  4|  UART0 - RX       |  xx | U1RXD
+P? |  5|  UART0 - TX       |  xx | U1TXD
 
-(To exit the serial monitor, type ``Ctrl-]``.)
 
-See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects.
 
-## Example Output
+-- Usage tunnel interface
+    under linux/esp32 are some tools
+        esp32_reset.sh  -- toggle esp32 reset
+        setup_pins.sh   -- Setup beaglebone io pins
+    
+You need to create a file called ```cfg.txt``` that contains the configuration info.
+Including the IP configuration.
+----
+protocols bgn 
+password YourWifiPassword  
+ssid YourWifiSSID
+sta 10.1.1.73 10.1.1.9 255.255.255.0 3500000
+---
+Once the firmware is loaded and the ESP is started, it will wait on UART2 for configuration.
+The ```decode``` tool will configure everything and start.
 
-As you run the example, you will see the following log:
+
+## building 
+### Tunnel
+
+Check the short Makefile!!
+
+idf.py menuconfig - check what needs chaning
+idf.py build
+idf.py flash
+--OR--
+make HOST=10.1.1.73
+
+
+On the target:
+
+
+The "decode tool will load a local file "cfg.txt"
+```
+protocols bgn
+password NeverTellAnyone
+ssid mySSID
+sta 10.1.1.73 10.1.1.9 255.255.255.0 3500000
+```
+which describes the esp configuration to connect to the network
+
 
 ```
-I (317) gpio: GPIO[18]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0
-I (327) gpio: GPIO[19]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0
-I (337) gpio: GPIO[4]| InputEn: 1| OutputEn: 0| OpenDrain: 0| Pullup: 1| Pulldown: 0| Intr:1
-I (347) gpio: GPIO[5]| InputEn: 1| OutputEn: 0| OpenDrain: 0| Pullup: 1| Pulldown: 0| Intr:1
-Minimum free heap size: 289892 bytes
-cnt: 0
-cnt: 1
-GPIO[4] intr, val: 1
-GPIO[5] intr, val: 1
-cnt: 2
-GPIO[4] intr, val: 0
-cnt: 3
-GPIO[4] intr, val: 1
-GPIO[5] intr, val: 1
-cnt: 4
-GPIO[4] intr, val: 0
-cnt: 5
-GPIO[4] intr, val: 1
-GPIO[5] intr, val: 1
-cnt: 6
-GPIO[4] intr, val: 0
-cnt: 7
-GPIO[4] intr, val: 1
-GPIO[5] intr, val: 1
-cnt: 8
-GPIO[4] intr, val: 0
-cnt: 9
-GPIO[4] intr, val: 1
-GPIO[5] intr, val: 1
-cnt: 10
-...
+$ sudo ./decode /dev/ttyS1 tun3
+Open Uart /dev/ttyS1
+GPIO: 0
+
+/dev/spidev1.0: spi mode 0x0, 8 bits per word, 48000000 Hz max
+Waiting..
+ S: 2 <>
+ S: 1 <>
+ S: 31 <ready to receive configuration>
+ S: 1 <>
+Waiting..
+ S: 14 <Starting Wifi>
+Starting Wifi
+```
+Which indicates all is working..
+
+Troubleshooting:
+```
+ sudo ./decode /dev/ttyS1 tun3
+/sys/class/gpio/gpio117/direction
+Fail 38
+```
+There seems to be a problem on the beagle io-setup
+Usually running the setup_pin.sh again fixes it..
+
+### RF433 interface
+
+Check the short Makefile!!
+
+Prepare wifi configuration:
+```
+echo "SSID: MyCoolWifiSSID PW: IWillNotTell" > fatfs_image/wifi.cfg
 ```
 
-## Troubleshooting
+idf.py menuconfig - check what needs chaning
+idf.py build
+idf.py flash
+--OR--
+make HOST=10.1.1.73
 
-For any technical queries, please open an [issue](https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
+The software expects a file "wifi.cfg" in its storage.
+It can either (prefered) be installed before  compilation time or installed/updated during runtime using the cmd interface:
+```
+echo "Store wifi.cfg $(base64 < fatfs_image/wifi.cfg)" | ssh 10.1.1.73 dd of=/dev/ttyS2
+```
+
+Once the configuration is installed, the wifi connects automatically and starts the web servers.
+
+
+Button interface:  http://{esp32-hostname}/index.html
+
+The uart and reset button is available if the basic authentication is installed
+
+The server only starts listening AFTER authentication like:
+
+```curl -u Beaglebone:Beagle1  http://beagle1w.nispuk.com/basic_auth```
+
+or
+```curl -u Beaglebone:Beagle1  http://beagle1w.nispuk.com/basic_auth?reset```
+The latter will also toggle the reset-GPIO.
+
+User/Password currently hard coded in configuration... (TODO)
+
+Success will be greeted with from curl:
+```
+{"authenticated": true,"user": "Beaglebone"}
+```
+
+The remove-uart interface is now also active:
+
+```stty -icanon && nc beagle1w.nispuk.com 9876 ```
+
+Gives you an interactive console to the uart...
+
+# TODO
+  - a lot of html work - looks horrible currently
+  - html capture rf433 signal interface
+  - merge the tunnel & the web server into a single ESP32 image
+  - ??
+
+
+  
+
+
+
+

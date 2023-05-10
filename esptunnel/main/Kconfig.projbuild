@@ -1,0 +1,132 @@
+menu "HW Configuration"
+
+    orsource "$IDF_PATH/examples/common_components/env_caps/$IDF_TARGET/Kconfig.env_caps"
+
+    config UARTIF_UART
+	int "UART for ip comm"
+        range 1 2
+	default 2
+	help
+		Uart for ip communications should have RTS/CTS pins
+
+
+    config GPIO_UARTIF_TX
+	int "UART tx-pin output for ip comm"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+	default 17
+	help
+		Uart for ip communications should have RTS/CTS pins
+
+
+    config GPIO_UARTIF_RX
+	int "UART rx-pin input for ip comm"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+	default 16
+	help
+		Uart for ip communications should have RTS/CTS pins
+
+
+    config GPIO_UARTIF_RTS
+	int "UART rts-pin input for ip comm"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+	default 14
+	help
+		Uart for ip communications should have RTS/CTS pins
+
+
+    config GPIO_UARTIF_CTS
+	int "UART cts-pin output for ip comm"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+	default 15
+	help
+		Uart for ip communications should have RTS/CTS pins
+
+
+
+    config GPIO_RF433_TX
+        int "GPIO output pin to rf433 transmitter"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        default 8 if IDF_TARGET_ESP32C2 || IDF_TARGET_ESP32H4 || IDF_TARGET_ESP32H2
+        default 20
+        help
+            GPIO pin number to be used to send rf433 data stream
+
+    config GPIO_RF433_RX
+        int "GPIO input pin from rf433 receiver"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
+        default 3
+        help
+            GPIO pin number to be used as rf433 rx
+
+    config SPIO_GPIO_HANDSHAKE 
+	int "SPI handshake output to host"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
+	default 0 
+
+    config SPIO_GPIO_MOSI 
+	int "SPI input"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
+        default 11
+
+    config SPIO_GPIO_MISO 
+	int "SPI output"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
+        default 13
+
+    config SPIO_GPIO_SCLK 
+	int "SPI SCLK input"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
+        default 12
+
+    config SPIO_GPIO_CS 
+	int "SPI CS input"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
+        default 10
+endmenu
+menu "Console Configuration"
+
+    config CONSOLE_STORE_HISTORY
+        bool "Store command history in flash"
+        default y
+        help
+            Linenoise line editing library provides functions to save and load
+            command history. If this option is enabled, initalizes a FAT filesystem
+            and uses it to store command history.
+
+    config CONSOLE_MAX_COMMAND_LINE_LENGTH
+        int "Maximum command line length"
+        default 1024
+        help
+            This value marks the maximum length of a single command line. Once it is
+            reached, no more characters will be accepted by the console.
+
+endmenu
+menu "Wifi Configuration"
+
+    config EXAMPLE_BASIC_AUTH
+        bool "Basic Authentication"
+        default n
+        help
+            Basic Authentication is a method for an HTTP user agent (e.g. a web browser)
+            to provide a user name and password when making a request. It is the simplest
+            technique for enforcing access controls to web resources. because it doesn't
+            require cookies, session identifiers, or login pages; rather, it uses standard
+            fields in the HTTP header.
+            Note that, Basic Authentication is not encrypted channel and also easy to retrieve
+            credentials as they are sent in plain text format.
+
+    config EXAMPLE_BASIC_AUTH_USERNAME
+        string "Basic Authenticate User Name"
+        depends on EXAMPLE_BASIC_AUTH
+        default "ESP32"
+        help
+            The client's user name which used for basic authenticate.
+
+    config EXAMPLE_BASIC_AUTH_PASSWORD
+        string "Basic Authenticate Password"
+        depends on EXAMPLE_BASIC_AUTH
+        default "ESP32Webserver"
+        help
+            The client's password which used for basic authenticate.
+
+endmenu

@@ -1,0 +1,93 @@
+menu "RF433 Interface Configuration"
+
+    orsource "$IDF_PATH/examples/common_components/env_caps/$IDF_TARGET/Kconfig.env_caps"
+
+    config GPIO_RF433_TX
+        int "GPIO output pin to rf433 transmitter"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        default 8 if IDF_TARGET_ESP32C2 || IDF_TARGET_ESP32H4 || IDF_TARGET_ESP32H2
+        default 20
+        help
+            GPIO pin number to be used to send rf433 data stream
+
+    config GPIO_RF433_RX
+        int "GPIO input pin from rf433 receiver"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
+        default 3
+        help
+            GPIO pin number to be used as rf433 rx
+
+endmenu
+menu "System Console Configuration"
+
+    config CONSOLE_STORE_HISTORY
+        bool "Store command history in flash"
+        default y
+        help
+            Linenoise line editing library provides functions to save and load
+            command history. If this option is enabled, initalizes a FAT filesystem
+            and uses it to store command history.
+
+    config CONSOLE_MAX_COMMAND_LINE_LENGTH
+        int "Maximum command line length"
+        default 1024
+        help
+            This value marks the maximum length of a single command line. Once it is
+            reached, no more characters will be accepted by the console.
+
+endmenu
+menu "Webserver Configuration"
+
+    config EXAMPLE_BASIC_AUTH
+        bool "Basic Authentication"
+        default n
+        help
+            Basic Authentication is a method for an HTTP user agent (e.g. a web browser)
+            to provide a user name and password when making a request. It is the simplest
+            technique for enforcing access controls to web resources. because it doesn't
+            require cookies, session identifiers, or login pages; rather, it uses standard
+            fields in the HTTP header.
+            Note that, Basic Authentication is not encrypted channel and also easy to retrieve
+            credentials as they are sent in plain text format.
+
+    config EXAMPLE_BASIC_AUTH_USERNAME
+        string "Basic Authenticate User Name"
+        depends on EXAMPLE_BASIC_AUTH
+        default "ESP32"
+        help
+            The client's user name which used for basic authenticate.
+
+    config EXAMPLE_BASIC_AUTH_PASSWORD
+        string "Basic Authenticate Password"
+        depends on EXAMPLE_BASIC_AUTH
+        default "ESP32Webserver"
+        help
+            The client's password which used for basic authenticate.
+
+endmenu
+menu "Remote Uart Console"
+    config UARTIF_UART  
+        depends on EXAMPLE_BASIC_AUTH
+    	int "Uart to use for console"
+    	default 2
+	help
+		ESP32 Uart to use to connect
+    config GPIO_UARTIF_TX  
+        depends on EXAMPLE_BASIC_AUTH
+	default 17
+        int "Uart TX pin"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+    config GPIO_UARTIF_RX  
+        depends on EXAMPLE_BASIC_AUTH
+	default 16
+        int "Uart RX pin"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+    config UARTIF_PORT 
+        depends on EXAMPLE_BASIC_AUTH
+	int "Port to listen for console"
+	default 9876
+    config GPIO_RESET_PIN
+        depends on EXAMPLE_BASIC_AUTH
+	int "Gpio to toggle to reset Beaglebone"
+	default 9
+endmenu
