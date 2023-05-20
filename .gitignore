@@ -7,3 +7,4 @@
 # by "idf.py build")
 /firmware/build
 /firmware/sdkconfig
+system.cfg

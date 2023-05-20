@@ -18,6 +18,7 @@ extern "C" {
 #include "serio.h"
 #include "console.h"
 #include "wifi_comm.h"
+#include "cfg_parse.h"
 }
 
 extern void setup_spi(void);
@@ -93,19 +94,57 @@ static void initializeWifi(void)
 	ESP_ERROR_CHECK( esp_netif_get_mac(netif_sta, mac));
 	// xTaskCreate(wifiTxTask, "wifi_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
 }
+static char *tunnel= NULL;
 
 static void load_configuration(void) {
-   
+
+#define Xstrcpy(a,b) do { char *p=b; if (b) { strcpy(a,p); } } while(0)
+	Xstrcpy(networkName ,getcfg("SSID"));
+        printf("WIFI config:  %s\n",networkName);
+	Xstrcpy( networkPass , getcfg("PW") );
+        printf("WIFI PW:  %s\n",networkPass);
+	char *tmp = getcfg("PROTO");
+			wirelessProtocols = 0;
+
+			if (strchr(tmp, 'b') != NULL)
+				wirelessProtocols |= WIFI_PROTOCOL_11B;
+			if (strchr(tmp, 'g') != NULL)
+				wirelessProtocols |= WIFI_PROTOCOL_11G;
+			if (strchr(tmp, 'n') != NULL)
+				wirelessProtocols |= WIFI_PROTOCOL_11N;
+			if (strchr(tmp, 'l') != NULL)
+				wirelessProtocols |= WIFI_PROTOCOL_LR;
+
+        printf("WIFI proto:  %s\n",tmp);
+	tunnel = getcfg("TUNNEL");
+        printf("WIFI tunnel:  %s\n",tunnel);
+
+	myPrintf("ready to connect: %s\n",tunnel);
+	// "ready to connect:") ) { // sta 10.1.1.73 10.1.1.9 255.255.255.0 3500000
 }
 
 static void configure_network(void) 
 {
-
+	char *nw = getcfg("SSID");
+        printf("WIFI config:  %s\n",nw ? nw : " -- NULL --");
 	while ( wirelessInterface == (wifi_interface_t) -1)
 	{
 		static char line[256];
 		readLine(UART_DEFAULT,line,sizeof(line));
 		printf("input line: %s\n", line);
+
+		if (strstr(line,"Start")  != NULL ) {
+		    	printf("Configuration set..\n");
+			if (sscanf(tunnel, "sta %d.%d.%d.%d %d.%d.%d.%d %d.%d.%d.%d %d", 
+					&staticIpAddress[0], &staticIpAddress[1], &staticIpAddress[2], &staticIpAddress[3], 
+					&staticGateway[0], &staticGateway[1], &staticGateway[2], &staticGateway[3], 
+					&staticNetMask[0], &staticNetMask[1], &staticNetMask[2], &staticNetMask[3], 
+					&baudRate) == 13){
+			    printf("Go\n");
+			    wirelessInterface = WIFI_IF_STA;
+			    break;
+			}
+		}
 
 		char tmp[16];
 		if (sscanf(line, "ssid%s", networkName) == 1)
@@ -135,12 +174,14 @@ static void configure_network(void)
 
 			printf("got protocols %d\n", wirelessProtocols);
 		}
+#if 0
 		else if (sscanf(line, "ap%d", &baudRate) == 1)
 		{
 			printf("got ap with baudrate %d\n", baudRate);
 			wirelessInterface = WIFI_IF_AP;
 			break;
 		}
+#endif
 		else if (sscanf(line, "sta %d.%d.%d.%d %d.%d.%d.%d %d.%d.%d.%d %d", 
 					&staticIpAddress[0], &staticIpAddress[1], &staticIpAddress[2], &staticIpAddress[3], 
 					&staticGateway[0], &staticGateway[1], &staticGateway[2], &staticGateway[3], 
@@ -166,6 +207,7 @@ void wifiTunnel(void *) {
     printf("\n\nready to receive configuration\n\n");
 
     setup_spi();
+    load_configuration();
     configure_network();
 
     myPrintf("Starting Wifi\n");

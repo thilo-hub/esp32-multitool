@@ -1,0 +1,7 @@
+SSID=WifiNetwork
+PW=PasswordForWifi
+AUTHUSER=Beaglebone
+AUTHPASS=Beagle1
+PROTO=bgn 
+TUNNEL=sta 10.1.1.73 10.1.1.9 255.255.255.0 3500000
+

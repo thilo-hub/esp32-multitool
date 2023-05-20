@@ -83,10 +83,13 @@ The ```decode``` tool will configure everything and start.
 
 Check the short Makefile!!
 
+idf.py  set-target esp32s3
 idf.py menuconfig - check what needs chaning
 idf.py build
 idf.py flash
 --OR--
+idf.py  set-target esp32s3
+idf.py menuconfig - check what needs chaning
 make HOST=10.1.1.73
 
 

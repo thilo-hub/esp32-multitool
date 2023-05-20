@@ -8,7 +8,7 @@ HOST=192.168.7.2
 
 all: flash
 
-compile: version
+compile: version setup
 	idf.py build
 
 flash: compile
@@ -19,6 +19,10 @@ flash: compile
 		0x8000   build/partition_table/partition-table.bin \
 		0x10000  build/generic_gpio.bin \
 		0x110000 build/storage.bin
+
+setup:
+	@test -d esp_filesystem || mkdir esp_filesystem
+	@test -f esp_filesystem/system.cfg || cp ../system.cfg esp_filesystem/system.cfg
 
 
 version:

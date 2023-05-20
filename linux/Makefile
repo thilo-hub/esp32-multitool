@@ -1,5 +1,5 @@
 
-CFLAGS=-g
+CFLAGS=-g -O
 decode: decode.o main_decode.o serio.o tun1.o spi/xdata-1.o spi/checksum.o
 
 

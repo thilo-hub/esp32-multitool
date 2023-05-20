@@ -40,7 +40,7 @@ menu "Webserver Configuration"
 
     config EXAMPLE_BASIC_AUTH
         bool "Basic Authentication"
-        default n
+        default y
         help
             Basic Authentication is a method for an HTTP user agent (e.g. a web browser)
             to provide a user name and password when making a request. It is the simplest

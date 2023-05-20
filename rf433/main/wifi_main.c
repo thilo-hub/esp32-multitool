@@ -26,6 +26,7 @@
 #include <string.h>
 #include "btn.h"
 #include "serio.h"
+#include "cfg_parse.h"
 
 #define DEBUG_UPLOAD 
 #define EXAMPLE_HTTP_QUERY_KEY_MAX_LEN  (64)
@@ -169,8 +170,8 @@ static void httpd_register_basic_auth(httpd_handle_t server)
 {
     basic_auth_info_t *basic_auth_info = calloc(1, sizeof(basic_auth_info_t));
     if (basic_auth_info) {
-        basic_auth_info->username = CONFIG_EXAMPLE_BASIC_AUTH_USERNAME;
-        basic_auth_info->password = CONFIG_EXAMPLE_BASIC_AUTH_PASSWORD;
+        basic_auth_info->username = getcfg("AUTHUSER");
+        basic_auth_info->password = getcfg("AUTHPASS");
 
         basic_auth.user_ctx = basic_auth_info;
         httpd_register_uri_handler(server, &basic_auth);
@@ -522,6 +523,7 @@ esp_err_t example_wifi_sta_do_connect(wifi_config_t wifi_config, bool wait);
 
 static esp_err_t wifi_connect(void)
 {
+    esp_err_t rv = ESP_FAIL;
     ESP_LOGI(TAG, "Start example_connect.");
     example_wifi_start();
     wifi_config_t wifi_config = {
@@ -535,15 +537,14 @@ static esp_err_t wifi_connect(void)
         },
     };
 	ESP_LOGI(TAG, "Read CFG");
-    FILE *fp;
-    fp = fopen("/data/wifi.cfg","r");
-    esp_err_t rv = ESP_FAIL;
-    if ( fp != NULL ) {
-	int r = fscanf(fp,"SSID: %16s PW: %16s",wifi_config.sta.ssid,wifi_config.sta.password);
-	ESP_LOGI(TAG,"Got %d args",r);
-    fclose(fp);
+    char *ssid = getcfg("SSID");
+    char *password   = getcfg("PW");
+    if ( password && ssid ) {
+    	strlcpy((char *)wifi_config.sta.ssid,ssid,sizeof(wifi_config.sta.ssid));
+    	strlcpy((char *)wifi_config.sta.password,password,sizeof(wifi_config.sta.password));
     } else {
-	ESP_LOGI(TAG," No such file");
+	ESP_LOGI(TAG,"No Wifi Configuration");
+	return rv;
     }
     ESP_LOGI(TAG,"Got SSID/PW: %s/%s",wifi_config.sta.ssid,wifi_config.sta.password);
     rv =  example_wifi_sta_do_connect(wifi_config, true);
@@ -602,9 +603,9 @@ void register_wifi(void)
     for (int i=0;i<(sizeof(cmd)/sizeof(cmd[0]));i++){
 	    ESP_ERROR_CHECK( esp_console_cmd_register(cmd+i) );
     }
-    FILE *fp = fopen("/data/wifi.cfg","r");
-    if ( fp != NULL ) {
-	fclose(fp);
+    char *ssid = getcfg("SSID");
+    char *password   = getcfg("PW");
+    if ( ssid && password ) {
 	cmd_wifi(0,NULL);
     }
 }

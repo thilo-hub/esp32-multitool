@@ -1,7 +1,7 @@
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <sys/ioctl.h>
 #include "decode.h"
 #include <linux/if_tun.h>
@@ -14,7 +14,7 @@
 #define  USE_FORK
 
 #include "spi/spi.h"
-int chat_wifisetup(int fd);
+int chat_wifisetup(int fd,char *tundev);
 extern void reboot_esp( void );
 
 int writetun(int handle,unsigned char *buffer,int len)
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
    int r;
    pid_t pid;
    char buf[1600];
-   while(!chat_wifisetup(fdUart) ) {
+   while(!chat_wifisetup(fdUart,argv[2]) ) {
 	   fprintf(stderr,"Waiting..\n");
    }
    if ( (pid=fork()) == 0 ) {
@@ -239,7 +239,7 @@ struct pollfd pfd[3];
 }
 
 
-int chat_wifisetup(int fd)
+int chat_wifisetup(int fd,char *tundev)
 {
 	static int blen=0;
 	static char buf[1256];
@@ -249,11 +249,27 @@ int chat_wifisetup(int fd)
 	buf[blen]=0;
 	// fprintf(stderr," Got fdUart %d %d\n",l,blen);
 	char *nl;
+	char if1[256];
+	char route[256];
 	while (blen>0 && (nl = memchr(buf,'\n',blen)) != NULL ){
 		*nl++ = 0;
 		int sl = nl-buf;
 		fprintf(stderr," S: %d <%s>\n",sl,buf);
-		if ( strstr(buf,"ready to receive configuration") ) 
+		if ( strstr(buf,"ready to connect:") ) {
+			// sta 10.1.1.73 10.1.1.9 255.255.255.0 3500000
+			int ip[4],gw[4],ms[4],baud;
+			if ( sscanf(buf,"ready to connect: sta %d.%d.%d.%d %d.%d.%d.%d %d.%d.%d.%d %d",
+						ip,ip+1,ip+2,ip+3,
+						gw,gw+1,gw+2,gw+3,
+						ms,ms+1,ms+2,ms+3,
+						&baud) == 13 ) {
+				sprintf(if1,"ifconfig %s %d.%d.%d.%d netmask %d.%d.%d.%d up",tundev,ip[0],ip[1],ip[2],ip[3],ms[0],ms[1],ms[2],ms[3]);
+				sprintf(route,"route add default gw %d.%d.%d.%d",gw[0],gw[1],gw[2],gw[3]);
+				fprintf(stderr,"Got config for \n%s\n%s\nbaud:%d\n",if1,gw,baud);
+				//sleep(1);
+				write(fd,"Start\n\n\n",6);
+			}
+		} else if ( strstr(buf,"XXready to receive configuration") ) 
 		{ 
 			// fprintf(stderr,"Got %s\n",buf); 
 			int fi = open("cfg.txt",O_RDONLY);
@@ -265,8 +281,8 @@ int chat_wifisetup(int fd)
 				fullspeed_uart(fd);
 				fprintf(stderr,"%s\n",buf); 
 				system("ifconfig eth0 down");
-				system("ifconfig tun3 10.1.1.73 netmask 255.255.255.0 up");
-				system("route add default gw 10.1.1.9");
+				system(if1);
+				system(route);
 				return 1;
 		}
 		memmove(buf,nl,blen-sl);
