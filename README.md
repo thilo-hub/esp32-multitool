@@ -66,14 +66,10 @@ P? |  5|  UART0 - TX       |  xx | U1TXD
         esp32_reset.sh  -- toggle esp32 reset
         setup_pins.sh   -- Setup beaglebone io pins
     
-You need to create a file called ```cfg.txt``` that contains the configuration info.
-Including the IP configuration.
-----
-protocols bgn 
-password YourWifiPassword  
-ssid YourWifiSSID
-sta 10.1.1.73 10.1.1.9 255.255.255.0 3500000
----
+All configuration is in system.cfg now
+copy the template system.cfg.default to system.cfg and edit it
+the Makefiles will copy the config into the esp filesystem
+
 Once the firmware is loaded and the ESP is started, it will wait on UART2 for configuration.
 The ```decode``` tool will configure everything and start.
 
@@ -96,7 +92,7 @@ make HOST=10.1.1.73
 On the target:
 
 
-The "decode tool will load a local file "cfg.txt"
+UPDATE: configuration is now all in system.cfg (see above)
 ```
 protocols bgn
 password NeverTellAnyone
@@ -137,9 +133,7 @@ Usually running the setup_pin.sh again fixes it..
 Check the short Makefile!!
 
 Prepare wifi configuration:
-```
-echo "SSID: MyCoolWifiSSID PW: IWillNotTell" > fatfs_image/wifi.cfg
-```
+UPDATE: configuration is now all in system.cfg (see above)
 
 idf.py menuconfig - check what needs chaning
 idf.py build
@@ -147,10 +141,10 @@ idf.py flash
 --OR--
 make HOST=10.1.1.73
 
-The software expects a file "wifi.cfg" in its storage.
+The software reads the config from the ESP
 It can either (prefered) be installed before  compilation time or installed/updated during runtime using the cmd interface:
 ```
-echo "Store wifi.cfg $(base64 < fatfs_image/wifi.cfg)" | ssh 10.1.1.73 dd of=/dev/ttyS2
+echo "Store system.cfg $(base64 < .../system.cfg)" | ssh 10.1.1.73 dd of=/dev/ttyS2
 ```
 
 Once the configuration is installed, the wifi connects automatically and starts the web servers.
