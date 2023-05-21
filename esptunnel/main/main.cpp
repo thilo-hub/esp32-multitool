@@ -19,6 +19,7 @@ extern "C" {
 #include "console.h"
 #include "wifi_comm.h"
 #include "cfg_parse.h"
+#include "version.h"
 }
 
 extern void setup_spi(void);
@@ -137,6 +138,7 @@ static void configure_network(void)
 {
 	char *nw = getcfg("SSID");
 
+	myPrintf("%s\n",GIT_INFO);
 	if ( dnsserver )
 	    myPrintf("DNS: %s\n",dnsserver);
 
