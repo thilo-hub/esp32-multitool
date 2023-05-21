@@ -1,7 +1,7 @@
 idf_component_register(
 	SRCS
 		main.cpp spio.cpp checksum.c serio_task.c console.c wifi_comm.c console_main.c
-		../../rf433/main/cfg_parse.c
+		../../common/cfg_parse.c ../../common/spifs_main.c ../../common/rf433_main.c ../../common/rf433_task.c
         INCLUDE_DIRS 
 		"." "../../includes" "${IDF_PATH}/components/wpa_supplicant/src/utils"
 )

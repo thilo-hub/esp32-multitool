@@ -23,6 +23,7 @@
 #include "cmd_rf433.h"
 #include "serio.h"
 #include "version.h"
+#include "spifs.h"
 
 static const char* TAG = "rf433";
 #define PROMPT_STR CONFIG_IDF_TARGET
@@ -129,6 +130,7 @@ void app_main(void)
     register_system();
     // register_wifi();
     register_nvs();
+    register_spifs();
     register_rf433();
     register_wifi();
     register_uart();

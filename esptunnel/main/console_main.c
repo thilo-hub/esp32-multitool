@@ -20,8 +20,10 @@
 #include "cmd_system.h"
 // #include "cmd_wifi.h"
 #include "cmd_nvs.h"
-// #include "cmd_rf433.h"
+#include "cmd_rf433.h"
+#include "spifs.h"
 #include "version.h"
+
 
 static const char* TAG = "tunif";
 #define PROMPT_STR CONFIG_IDF_TARGET
@@ -131,7 +133,10 @@ void app_main(void)
     register_nvs();
     // register_rf433();
     // register_wifi();
+    register_spifs();
     register_wifitun();
+    register_rf433();
+
 
 #if defined(CONFIG_ESP_CONSOLE_UART_DEFAULT) || defined(CONFIG_ESP_CONSOLE_UART_CUSTOM)
     esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
