@@ -24,7 +24,6 @@
 #include "driver/gpio.h"
 #include <esp_http_server.h>
 #include <string.h>
-#include "btn.h"
 #include "serio.h"
 #include "cfg_parse.h"
 
