@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
    int fdUart = -1,fdTun = -1,l,fm;
    fd_set fds;
 
+   alarm(20);
    if(argc < 3) {
       fprintf(stderr,"Usage: bridge tty tap|tun\n");
       exit(1);
@@ -256,12 +257,9 @@ int chat_wifisetup(int fd,char *tundev)
 		*nl++ = 0;
 		int sl = nl-buf;
 		fprintf(stderr," S: %d <%s>\n",sl,buf);
-#if 1
+
 		char dns[60],search[60];
-		if ( strstr(buf,"DNS:") &&
-		       sscanf(buf,"DNS: %s %s",&dns,&search) == 2 ) {
-			fprintf(stderr,"D:%s\n",dns ? dns : "--NO--");
-			fprintf(stderr,"S:%s<\n",search);
+		if ( sscanf(buf,"DNS: %s %s",&dns,&search) == 2 ) {
 			FILE *fp=fopen("/etc/resolv.conf","w");
 			if ( fp ) {
 				fprintf(fp,"search %s\nnameserver %s\n",search,dns);
@@ -269,7 +267,7 @@ int chat_wifisetup(int fd,char *tundev)
 				fprintf(stderr,"Resolv.conf set %s\n",dns);
 			}
 		}
-#endif
+
 		if ( strstr(buf,"ready to connect:") ) {
 			// sta 10.1.1.73 10.1.1.9 255.255.255.0 3500000
 			int ip[4],gw[4],ms[4],baud;
@@ -298,6 +296,7 @@ int chat_wifisetup(int fd,char *tundev)
 				system("ifconfig eth0 down");
 				system(if1);
 				system(route);
+				alarm(0); // cancel alarm it seems to connect now..
 				return 1;
 		}
 		memmove(buf,nl,blen-sl);

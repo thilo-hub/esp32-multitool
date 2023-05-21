@@ -6,7 +6,7 @@ OBJS=decode.o main_decode.o serio.o tun1.o spi/xdata-1.o spi/checksum.o
 decode-esp: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $@
 
-install:
+install: decode-esp esp32-wifi.service
 	install decode-esp /usr/local/bin/
 	install esp32-wifi.service /lib/systemd/system/
 	systemctl enable esp32-wifi
