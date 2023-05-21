@@ -18,8 +18,6 @@
 
 #define SYSFS  "/sys/class/gpio/"
 #include "checksum.h"
-// int checksum_check(unsigned int *hdr,void *buffer,int len);
-// void checksum_make(unsigned int *hdr, void *buffer,int len);
 
 #define GPIO_S(cmd,value)      do                        \
 	{ int fd=open(SYSFS cmd,O_WRONLY);             \
@@ -31,18 +29,24 @@
 	  write(fd,value,strlen(value));                 \
 	  close(fd);                                     \
 	} while(0)
+//
+// 
+// use GPIO_C("P9_29","spi")   to set/sys/devices/platform/ocp/ocp\:P9_29_pinmux/state
+#define GPIO_C(pin,value)  GPIO_S("../../devices/platform/ocp/ocp:" pin "_pinmux/state",value)
+
+#define RESET_ESP(lvl)  GPIO_S("gpio49/value",lvl);
 void reboot_esp()
 {
 
 
-	GPIO_S("gpio117/direction","out");
-	GPIO_S("gpio49/direction","out");
+	GPIO_S("gpio49/direction","out");  // reset-pin
+	RESET_ESP("0");
 
+	GPIO_S("gpio117/direction","out"); // GPIO-0
 	GPIO_S("gpio117/value","1");
-	GPIO_S("gpio49/value","0");
-	GPIO_S("gpio49/value","1");
+	RESET_ESP("1");
 	usleep(10000);
-	GPIO_S("gpio117/direction","in");
+	GPIO_S("gpio117/direction","in");  // Use as remote confirm
 
 	//GPIO_S("gpio117/edge","rising");
 	GPIO_S("gpio117/edge","falling");
@@ -166,14 +170,25 @@ int openSPI(void)
 	return fd;
 }
 
-int connectESP(void)
+void configureBeagle(void)
 {
-
 	GPIO_S("unexport","49");
 	GPIO_S("unexport","117");
+	GPIO_C("P9_24", "uart");
+	GPIO_C("P9_26", "uart");
+	GPIO_C("P9_28", "spi_cs");
+	GPIO_C("P9_29", "spi");
+	GPIO_C("P9_30", "spi");
+	GPIO_C("P9_31", "spi_sclk");
+
+	// echo spi_cs  > /sys/devices/platform/ocp/ocp:P9_28_pinmux/state
 
 	GPIO_S("export","49");
 	GPIO_S("export","117");
+}
+int connectESP(void)
+{
+
 
 	const char *gpio = SYSFS "gpio117/value";
 	struct pollfd pfd;

@@ -1,18 +1,20 @@
 [Unit]
 Description=ESP32 Wifi
-#After=network.target
-#Requires=avahi-daemon.service
-#After=avahi-daemon.service
+
 Before=network-online.target
+After=local-fs.target network-pre.target apparmor.service systemd-sysctl.service
+Before=network.target shutdown.target network-online.target
+
 
 [Service]
 Type=simple
-Restart=on-failure
-EnvironmentFile=-/etc/default/esp32-wifi
+Restart=always
+#Restart=on-failure
+#EnvironmentFile=-/etc/default/esp32-wifi
 ExecStart=/usr/local/bin/decode-esp /dev/ttyS1 tun0
 # User=shairport-sync
 # Group=shairport-sync
-PIDFile=/run/esp32-wifi.pid
+# PIDFile=/run/esp32-wifi.pid
 
 [Install]
-WantedBy=network-online.target
+WantedBy=network.target
