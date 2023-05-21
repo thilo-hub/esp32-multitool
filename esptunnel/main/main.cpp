@@ -50,6 +50,9 @@ static void networkStatus(void)
 		staticNetMask[0], staticNetMask[1], staticNetMask[2], staticNetMask[3],
 		baudRate);
 	printf( "MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+	// const ip_addr_t *dns = dns_getserver(0);
+	// const uint8_t *dns8 = (uint8_t*) dns;
+	// printf("DNS: %d.%d.%d.%d\n",dns8[0],dns8[1],dns8[2],dns8[3]);
 }
 
 static void initializeWifi(void)
@@ -95,6 +98,7 @@ static void initializeWifi(void)
 	// xTaskCreate(wifiTxTask, "wifi_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
 }
 static char *tunnel= NULL;
+static char *dnsserver = NULL;
 
 static void load_configuration(void) {
 
@@ -115,6 +119,12 @@ static void load_configuration(void) {
 			if (strchr(tmp, 'l') != NULL)
 				wirelessProtocols |= WIFI_PROTOCOL_LR;
 
+	char *dnsserver = getcfg("DNSSERVER");
+	if ( dnsserver )
+	{
+	    printf("DNS: %s\n",dnsserver);
+	    myPrintf("DNS: %s\n",dnsserver);
+	}
         printf("WIFI proto:  %s\n",tmp);
 	tunnel = getcfg("TUNNEL");
         printf("WIFI tunnel:  %s\n",tunnel);
@@ -126,7 +136,12 @@ static void load_configuration(void) {
 static void configure_network(void) 
 {
 	char *nw = getcfg("SSID");
+
+	if ( dnsserver )
+	    myPrintf("DNS: %s\n",dnsserver);
+
         printf("WIFI config:  %s\n",nw ? nw : " -- NULL --");
+        myPrintf("WIFI config:  %s\n",nw ? nw : " -- NULL --");
 	while ( wirelessInterface == (wifi_interface_t) -1)
 	{
 		static char line[256];
