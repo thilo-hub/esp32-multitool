@@ -19,16 +19,19 @@
 #include "nvs_flash.h"
 #include "cmd_system.h"
 #if CONFIG_WEBSERVER
-#include "cmd_wifi.h"
+//#include "cmd_wifi.h"
+#include "wifi_comm.h"
 #endif
 #include "cmd_nvs.h"
 #if CONFIG_RF433
 #include "cmd_rf433.h"
 #endif
 #include "spifs.h"
+#if CONFIG_WEBSERVER
 #include "wifi_comm.h"
+#endif
+#include "uart2_io.h"
 #include "version.h"
-
 
 static const char* TAG = "tunif";
 #define PROMPT_STR CONFIG_IDF_TARGET
@@ -132,9 +135,7 @@ void app_main(void)
     /* Register commands */
     esp_console_register_help_command();
     register_system();
-    // register_wifi();
     register_nvs();
-    // register_wifi();
     register_spifs();
 #if CONFIG_WIFI_TUNNEL
     register_wifitun();
@@ -142,8 +143,9 @@ void app_main(void)
 #if CONFIG_RF433
     register_rf433();
 #endif
+
 #if CONFIG_WEBSERVER
-    register_wifi();
+    register_webserver();
 #endif
 #ifdef CONFIG_UARTCON_ENABLE
     register_uart();

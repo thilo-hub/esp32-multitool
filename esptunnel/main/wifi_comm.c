@@ -10,6 +10,24 @@
 static struct raw_pcb *rawIcmp, *rawIgmp, *rawUdp, *rawUdpLite, *rawTcp;
 
 
+u8_t onRawInputFilter(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *addr)
+{
+	void *item;
+
+	u8_t o2 =pbuf_get_at(p,2);
+	u8_t o3 =pbuf_get_at(p,3);
+	if ( o2 == 0 && o3 == 1 ) {
+	    return 0;
+	}
+	if (xRingbufferSendAcquire(wifiToSerial, &item, p->tot_len+4, 0))
+	{
+		pbuf_copy_partial(p, (uint8_t*)item+4, p->tot_len, 0);
+		xRingbufferSendComplete(wifiToSerial, item);
+	}
+	pbuf_free(p);
+
+	return 1; // stop further processing by lwip
+}
 u8_t onRawInput(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *addr)
 {
 	void *item;
@@ -45,7 +63,7 @@ void onWifiEvent(void *arg, esp_event_base_t event_base, int32_t event_id, void 
 			raw_recv(rawIgmp, onRawInput, NULL);
 			raw_recv(rawUdp, onRawInput, NULL);
 			raw_recv(rawUdpLite, onRawInput, NULL);
-			raw_recv(rawTcp, onRawInput, NULL);
+			raw_recv(rawTcp, onRawInputFilter, NULL);
 			esp_wifi_connect();
 			break;
 		case WIFI_EVENT_STA_CONNECTED:

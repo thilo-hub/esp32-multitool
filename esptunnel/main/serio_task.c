@@ -16,7 +16,7 @@ void initializeUartConsole(int baudRate)
 #endif
 }
 
-void initializeUartHw(int baudRate)
+void initializeUartNetworkHw(int baudRate)
 {
 	uart_config_t uartConfig;
 	uartConfig.baud_rate = baudRate;
@@ -103,7 +103,7 @@ void uartStatus(void)
 }
 
 #if CONFIG_UARTIF_ENABLED
-void startUart(int baudRate)
+void startUartNetwork(int baudRate)
 {
 	ESP_ERROR_CHECK( uart_wait_tx_done(CONFIG_UARTIF_UART, portMAX_DELAY) );
 	ESP_ERROR_CHECK( uart_set_baudrate(CONFIG_UARTIF_UART, baudRate));

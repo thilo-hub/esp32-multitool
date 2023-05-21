@@ -9,13 +9,15 @@
 #include "console.h"
 #include "serio.h"
 
+
+
 int myPrintf(const char *fmt,...)
 {
    char *buffer=NULL;
    va_list ap;
    va_start(ap, fmt);
    int l = vasprintf(&buffer,fmt, ap);
-    uart_write_bytes(UART_DEFAULT, buffer,l);
+    uart_write_bytes(CONFIG_UARTIF_UART, buffer,l);
     free(buffer);
     return l;
 }
