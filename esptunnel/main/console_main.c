@@ -18,10 +18,15 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "cmd_system.h"
-// #include "cmd_wifi.h"
+#if CONFIG_WEBSERVER
+#include "cmd_wifi.h"
+#endif
 #include "cmd_nvs.h"
+#if CONFIG_RF433
 #include "cmd_rf433.h"
+#endif
 #include "spifs.h"
+#include "wifi_comm.h"
 #include "version.h"
 
 
@@ -102,8 +107,6 @@ static void initialize_nvs(void)
     }
     ESP_ERROR_CHECK(err);
 }
-void register_wifi(void);
-void register_wifitun(void);
 
 void app_main(void)
 {
@@ -131,12 +134,20 @@ void app_main(void)
     register_system();
     // register_wifi();
     register_nvs();
-    // register_rf433();
     // register_wifi();
     register_spifs();
+#if CONFIG_WIFI_TUNNEL
     register_wifitun();
+#endif
+#if CONFIG_RF433
     register_rf433();
-
+#endif
+#if CONFIG_WEBSERVER
+    register_wifi();
+#endif
+#ifdef CONFIG_UARTCON_ENABLE
+    register_uart();
+#endif
 
 #if defined(CONFIG_ESP_CONSOLE_UART_DEFAULT) || defined(CONFIG_ESP_CONSOLE_UART_CUSTOM)
     esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();

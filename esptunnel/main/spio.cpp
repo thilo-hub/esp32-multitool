@@ -24,6 +24,7 @@
 #include <freertos/ringbuf.h>
 
 #include "hw_config.h"
+#if CONFIG_SPIO_ENABLED
 //Called after a transaction is queued and ready for pickup by master. We use this to set the handshake line high.
 void my_post_setup_cb(spi_slave_transaction_t *trans);
 void my_post_trans_cb(spi_slave_transaction_t *trans);
@@ -183,3 +184,4 @@ void initializeSpi(void)
 }
 
 
+#endif

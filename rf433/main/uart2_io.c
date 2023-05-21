@@ -9,12 +9,12 @@
 #include "freertos/queue.h"
 #include "serio.h"
 
-// #define CONFIG_UARTIF_UART  2
-// #define CONFIG_GPIO_UARTIF_TX  17
-// #define CONFIG_GPIO_UARTIF_RX  16
-#define CONFIG_GPIO_UARTIF_RTS  14
-#define CONFIG_GPIO_UARTIF_CTS  15
-// #define CONFIG_UARTIF_PORT 9876
+// #define CONFIG_UARTCON_UART  2
+// #define CONFIG_GPIO_UARTCON_TX  17
+// #define CONFIG_GPIO_UARTCON_RX  16
+#define CONFIG_GPIO_UARTCON_RTS  14
+#define CONFIG_GPIO_UARTCON_CTS  15
+// #define CONFIG_UARTCON_PORT 9876
 
 #define CONFIG_EXAMPLE_IPV4 1
 
@@ -43,9 +43,9 @@ void initializeUartHw(int baudRate)
 	uartConfig.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
 	uartConfig.rx_flow_ctrl_thresh = 0; // 122;
 	uartConfig.source_clk = UART_SCLK_APB;
-	ESP_ERROR_CHECK(uart_set_pin(CONFIG_UARTIF_UART, CONFIG_GPIO_UARTIF_TX, CONFIG_GPIO_UARTIF_RX, CONFIG_GPIO_UARTIF_RTS, CONFIG_GPIO_UARTIF_CTS));
-	ESP_ERROR_CHECK(uart_driver_install(CONFIG_UARTIF_UART, 256, 256, 0, NULL, 0));
-	ESP_ERROR_CHECK(uart_param_config(CONFIG_UARTIF_UART, &uartConfig));
+	ESP_ERROR_CHECK(uart_set_pin(CONFIG_UARTCON_UART, CONFIG_GPIO_UARTCON_TX, CONFIG_GPIO_UARTCON_RX, CONFIG_GPIO_UARTCON_RTS, CONFIG_GPIO_UARTCON_CTS));
+	ESP_ERROR_CHECK(uart_driver_install(CONFIG_UARTCON_UART, 256, 256, 0, NULL, 0));
+	ESP_ERROR_CHECK(uart_param_config(CONFIG_UARTCON_UART, &uartConfig));
 
 }
 
@@ -56,12 +56,12 @@ static void uartRxTask(void *p)
 	int len=1;
 	int written=1;
 	printf("Starting U-RX\n");
-	uart_write_bytes(CONFIG_UARTIF_UART, "Starting\n",9);
+	uart_write_bytes(CONFIG_UARTCON_UART, "Starting\n",9);
 	while (len>0) {
 	    uint8_t buffer[256]; // bigger than MTU
-	    len = uart_read_bytes(CONFIG_UARTIF_UART, buffer, 1, portMAX_DELAY);
+	    len = uart_read_bytes(CONFIG_UARTCON_UART, buffer, 1, portMAX_DELAY);
 	    if ( len > 0 ) {
-		len += uart_read_bytes(CONFIG_UARTIF_UART, buffer+1, sizeof(buffer)-2, 0); // Maybe - get remaining....
+		len += uart_read_bytes(CONFIG_UARTCON_UART, buffer+1, sizeof(buffer)-2, 0); // Maybe - get remaining....
 		buffer[len]=0;
 		written = send(sock, buffer,len,0);
 		if (written < 0) {
@@ -92,7 +92,7 @@ static void do_retransmit(const int sock)
         } else {
             rx_buffer[len] = 0; // Null-terminate whatever is received and treat it like a string
             // ESP_LOGI(TAG, "Received %d bytes: %s", len, rx_buffer);
-	    uart_write_bytes(CONFIG_UARTIF_UART, rx_buffer,len);
+	    uart_write_bytes(CONFIG_UARTCON_UART, rx_buffer,len);
         }
     } while (len > 0);
     if ( rxTask != NULL )	
@@ -116,7 +116,7 @@ static void tcp_server_task(void *pvParameters)
         struct sockaddr_in *dest_addr_ip4 = (struct sockaddr_in *)&dest_addr;
         dest_addr_ip4->sin_addr.s_addr = htonl(INADDR_ANY);
         dest_addr_ip4->sin_family = AF_INET;
-        dest_addr_ip4->sin_port = htons(CONFIG_UARTIF_PORT);
+        dest_addr_ip4->sin_port = htons(CONFIG_UARTCON_PORT);
         ip_protocol = IPPROTO_IP;
     }
 #endif
@@ -125,7 +125,7 @@ static void tcp_server_task(void *pvParameters)
         struct sockaddr_in6 *dest_addr_ip6 = (struct sockaddr_in6 *)&dest_addr;
         bzero(&dest_addr_ip6->sin6_addr.un, sizeof(dest_addr_ip6->sin6_addr.un));
         dest_addr_ip6->sin6_family = AF_INET6;
-        dest_addr_ip6->sin6_port = htons(CONFIG_UARTIF_PORT);
+        dest_addr_ip6->sin6_port = htons(CONFIG_UARTCON_PORT);
         ip_protocol = IPPROTO_IPV6;
     }
 #endif
@@ -152,7 +152,7 @@ static void tcp_server_task(void *pvParameters)
         ESP_LOGE(TAG, "IPPROTO: %d", addr_family);
         goto CLEAN_UP;
     }
-    ESP_LOGI(TAG, "Socket bound, port %d", CONFIG_UARTIF_PORT);
+    ESP_LOGI(TAG, "Socket bound, port %d", CONFIG_UARTCON_PORT);
 
     err = listen(listen_sock, 1);
     if (err != 0) {
@@ -210,7 +210,7 @@ static void uartTxTask(void *)
 	while (true)
 	{
 		char *buffer = (char*)xRingbufferReceive(wifiToSerial, &len, portMAX_DELAY);
-		uart_write_bytes(CONFIG_UARTIF_UART, ep,len);
+		uart_write_bytes(CONFIG_UARTCON_UART, ep,len);
 		// uart_wsum += len;
 		vRingbufferReturnItem(wifiToSerial, buffer);
 	}
@@ -223,8 +223,8 @@ int startUart(int argc, char **argv)
 	if ( tcpServer == NULL ) {
 	    initializeUartHw(115200);
 	    int baudRate=115200;
-	    ESP_ERROR_CHECK( uart_wait_tx_done(CONFIG_UARTIF_UART, portMAX_DELAY) );
-	    ESP_ERROR_CHECK( uart_set_baudrate(CONFIG_UARTIF_UART, baudRate));
+	    ESP_ERROR_CHECK( uart_wait_tx_done(CONFIG_UARTCON_UART, portMAX_DELAY) );
+	    ESP_ERROR_CHECK( uart_set_baudrate(CONFIG_UARTCON_UART, baudRate));
 
 	    // xTaskCreate(uartTxTask, "uart_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
 	    xTaskCreate(tcp_server_task, "tcp_server", 4096, (void*)AF_INET, 5, &tcpServer);

@@ -5,6 +5,7 @@
 #include <esp_wifi.h>
 #include "wifi_comm.h"
 #include "serio.h"
+#if CONFIG_WIFI_TUNNEL
 
 static struct raw_pcb *rawIcmp, *rawIgmp, *rawUdp, *rawUdpLite, *rawTcp;
 
@@ -89,3 +90,4 @@ void wifiTxTask(void *)
 		vRingbufferReturnItem(serialToWifi, buffer);
 	}
 }
+#endif

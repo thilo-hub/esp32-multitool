@@ -27,5 +27,5 @@ setup:
 
 version:
 	@git log --pretty=format:'#define GIT_INFO_PRESENT%n static const char* GIT_INFO = "Version Information=[%H,%d]\r\n";' -n 1 >main/version.h.new
-	@cmp main/version.h.new main/version.h || mv main/version.h.new main/version.h 
+	@cmp main/version.h.new main/version.h && rm -f main/version.h.new || mv main/version.h.new main/version.h 
 

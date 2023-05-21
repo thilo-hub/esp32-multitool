@@ -22,6 +22,12 @@ extern "C" {
 #include "version.h"
 }
 
+#if CONFIG_WIFI_TUNNEL
+
+#if !CONFIG_SPIO_ENABLED && !CONFIG_UARTIF_ENABLED
+#error Invalid configuration without comm channel.
+#endif
+
 extern void setup_spi(void);
 extern void initializeSpi(void);
 // Parameters received at initialization time
@@ -223,7 +229,10 @@ void wifiTunnel(void *) {
     myPrintf("\n\nready to receive configuration\n\n");
     printf("\n\nready to receive configuration\n\n");
 
+
+#if CONFIG_SPIO_ENABLED
     setup_spi();
+#endif
     load_configuration();
     configure_network();
 
@@ -240,9 +249,13 @@ void wifiTunnel(void *) {
 	    while(1) {;} //hang
     }
 
+#if CONFIG_UARTIF_ENABLED
     startUart(baudRate);
+#endif
     initializeWifi();
+#if CONFIG_SPIO_ENABLED
     initializeSpi();
+#endif
 
     // Keep as wifi-tx task...
     wifiTxTask(NULL);
@@ -252,7 +265,9 @@ void wifiTunnel(void *) {
 static int cmd_tunnelStatus(int argc, char **argv)
 {
 	networkStatus();
+#if CONFIG_SPIO_ENABLED
         spiStatus();
+#endif
 	uartStatus();
 	return 0;
 }
@@ -273,3 +288,4 @@ extern "C" void register_wifitun(void)
     }
     xTaskCreate(wifiTunnel, "wifi_start", 4*2048, NULL, tskIDLE_PRIORITY + 2, NULL);
 }
+#endif

@@ -34,6 +34,7 @@
  * handlers for the web server.
  */
 
+#if CONFIG_WEBSERVER
 static const char *TAG = "webserver";
 
 #if CONFIG_EXAMPLE_BASIC_AUTH
@@ -560,52 +561,55 @@ static void connect_handler(void* arg, esp_event_base_t event_base,
         *server = start_webserver();
     }
 }
-int cmd_wifi(int argc, char **argv)
+int cmd_start_webserver(int argc, char **argv)
 {
     static httpd_handle_t server = NULL;
 
-    if (server == NULL ) {
-	    ESP_ERROR_CHECK(nvs_flash_init());
-	    ESP_ERROR_CHECK(esp_netif_init());
-	    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    if (server ) 
+    {
+	if (argc > 1 && strcmp("stop",argv[1]) == 0 ){
+	    ESP_LOGI(TAG, "Stopping webserver");
+	    if (stop_webserver(server) == ESP_OK) {
+		server = NULL;
+	    } else {
+		ESP_LOGE(TAG, "Failed to stop http server");
+	    }
+	}
+    } else {
+	ESP_ERROR_CHECK(nvs_flash_init());
+	ESP_ERROR_CHECK(esp_netif_init());
+	ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-	    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-	     * Read "Establishing Wi-Fi or Ethernet Connection" section in
-	     * examples/protocols/README.md for more information about this function.
-	     */
-	    ESP_ERROR_CHECK(wifi_connect());
+	ESP_ERROR_CHECK(wifi_connect());
+	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
+	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
 
-	    /* Register event handlers to stop the server when Wi-Fi or Ethernet is disconnected,
-	     * and re-start it upon connection.
-	     */
-	    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
-	    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
-
-	    /* Start the server for the first time */
-	    server = start_webserver();
+	server = start_webserver();
     }
 return 0;
 }
 
 
 #include "esp_console.h"
-void register_wifi(void)
+void register_webserver(void)
 {
     const esp_console_cmd_t cmd[] = {
     {
-        .command = "wifi",
-        .help = "Capture RF433 signals",
+        .command = "www",
+        .help = "Start or stop  webserver",
         .hint = NULL,
-        .func = &cmd_wifi
-	}
+        .func = &cmd_start_webserver
+	},
     };
     for (int i=0;i<(sizeof(cmd)/sizeof(cmd[0]));i++){
 	    ESP_ERROR_CHECK( esp_console_cmd_register(cmd+i) );
     }
+#ifdef CONFIG_WEBSERVER_AUTOSTART
     char *ssid = getcfg("SSID");
     char *password   = getcfg("PW");
     if ( ssid && password ) {
-	cmd_wifi(0,NULL);
+	cmd_start_webserver(0,NULL);
     }
+#endif
 }
-
+#endif

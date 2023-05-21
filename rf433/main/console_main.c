@@ -18,12 +18,16 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "cmd_system.h"
-#include "cmd_wifi.h"
 #include "cmd_nvs.h"
-#include "cmd_rf433.h"
-#include "serio.h"
-#include "version.h"
 #include "spifs.h"
+#if CONFIG_WEBSERVER
+#include "cmd_wifi.h"
+#endif
+#include "cmd_nvs.h"
+#if CONFIG_RF433
+#include "cmd_rf433.h"
+#endif
+#include "version.h"
 
 static const char* TAG = "rf433";
 #define PROMPT_STR CONFIG_IDF_TARGET
@@ -102,7 +106,6 @@ static void initialize_nvs(void)
     }
     ESP_ERROR_CHECK(err);
 }
-void register_wifi(void);
 
 void app_main(void)
 {
@@ -131,9 +134,19 @@ void app_main(void)
     // register_wifi();
     register_nvs();
     register_spifs();
+#if CONFIG_WIFI_TUNNEL
+    register_wifitun();
+#endif
+#if CONFIG_RF433
     register_rf433();
-    register_wifi();
+#endif
+
+#if CONFIG_WEBSERVER
+    register_webserver();
+#endif
+#ifdef CONFIG_UARTCON_ENABLE
     register_uart();
+#endif
 
 #if defined(CONFIG_ESP_CONSOLE_UART_DEFAULT) || defined(CONFIG_ESP_CONSOLE_UART_CUSTOM)
     esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();

@@ -32,6 +32,7 @@ void initializeUartHw(int baudRate)
 
 }
 
+#if CONFIG_UARTIF_ENABLED
 static void uartRxTask(void *)
 {
 	while (true)
@@ -92,6 +93,7 @@ static void uartTxTask(void *)
 		vRingbufferReturnItem(wifiToSerial, buffer);
 	}
 }
+#endif
 
 void uartStatus(void)
 {
@@ -100,6 +102,7 @@ void uartStatus(void)
 			printf("UART Errors:   %ld\n",uart_rerr);
 }
 
+#if CONFIG_UARTIF_ENABLED
 void startUart(int baudRate)
 {
 	ESP_ERROR_CHECK( uart_wait_tx_done(CONFIG_UARTIF_UART, portMAX_DELAY) );
@@ -108,4 +111,5 @@ void startUart(int baudRate)
 	xTaskCreate(uartRxTask, "uart_rx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
 	xTaskCreate(uartTxTask, "uart_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
 }
+#endif
 
