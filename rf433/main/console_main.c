@@ -18,14 +18,16 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "cmd_system.h"
-#include "cmd_nvs.h"
-#include "spifs.h"
 #if CONFIG_WEBSERVER
 #include "cmd_wifi.h"
 #endif
 #include "cmd_nvs.h"
 #if CONFIG_RF433
 #include "cmd_rf433.h"
+#endif
+#include "spifs.h"
+#if CONFIG_WEBSERVER
+#include "wifi_comm.h"
 #endif
 #include "version.h"
 
@@ -131,7 +133,6 @@ void app_main(void)
     /* Register commands */
     esp_console_register_help_command();
     register_system();
-    // register_wifi();
     register_nvs();
     register_spifs();
 #if CONFIG_WIFI_TUNNEL

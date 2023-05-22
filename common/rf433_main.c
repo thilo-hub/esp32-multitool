@@ -20,6 +20,7 @@
 // #include <sys/dirent.h>
 #include "base64.h"
 #include "spifs.h"
+#if CONFIG_RF433
 
 
 
@@ -163,7 +164,6 @@ void start_timer()
     ESP_ERROR_CHECK(gptimer_new_timer(&timer_config, &gptimer));
 }
 
-esp_err_t send_file(char *file) ;
 esp_err_t send_file(char *file) 
 {
     esp_err_t rv = ESP_FAIL;
@@ -329,4 +329,4 @@ void register_rf433(void)
 	    ESP_ERROR_CHECK( esp_console_cmd_register(cmd+i) );
     }
 }
-	
+#endif

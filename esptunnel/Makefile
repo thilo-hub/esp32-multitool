@@ -1,8 +1,9 @@
-all: flash
 
 HOST="10.1.1.73"
 FLASHER= esptool
 FLASHER= /Users/thilo/Downloads/ESP/flash_beagle1.sh --host ${HOST}
+
+all: compile 
 
 compile: version setup
 	idf.py build

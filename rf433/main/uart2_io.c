@@ -217,7 +217,7 @@ static void uartTxTask(void *)
 }
 #endif
 
-int startUart(int argc, char **argv)
+int startUartConsole(int argc, char **argv)
 {
     	static TaskHandle_t  tcpServer = NULL;
 	if ( tcpServer == NULL ) {

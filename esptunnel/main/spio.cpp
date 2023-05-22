@@ -116,7 +116,7 @@ extern "C"
 void spiStatus(void)
 {
   printf("SPI Received: %u\n",spi_read);
-  printf("SPI Send:     %u\n",spi_read);
+  printf("SPI Send:     %u\n",spi_write);
   printf("SPI Errors:   %u\n",spi_err);
 }
 

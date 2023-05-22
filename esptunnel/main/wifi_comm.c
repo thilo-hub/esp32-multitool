@@ -3,20 +3,27 @@
 #include <esp_private/wifi.h>
 #include <esp_wifi_netif.h>
 #include <esp_wifi.h>
+// #include <esp_system.h>
 #include "wifi_comm.h"
+#include <esp_log.h>
 #include "serio.h"
 #if CONFIG_WIFI_TUNNEL
+static const char *TAG = "wifidp";
 
 static struct raw_pcb *rawIcmp, *rawIgmp, *rawUdp, *rawUdpLite, *rawTcp;
 
 
+extern int httpd_server_port;
 u8_t onRawInputFilter(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *addr)
 {
 	void *item;
 
-	u8_t o2 =pbuf_get_at(p,2);
-	u8_t o3 =pbuf_get_at(p,3);
-	if ( o2 == 0 && o3 == 1 ) {
+	u8_t o2 =pbuf_get_at(p,22);
+	u8_t o3 =pbuf_get_at(p,23);
+	u16_t  port =o2<<8 | o3;
+	    //ESP_LOGI(TAG,"port %d %d",o2, o3);
+	if ( port == httpd_server_port || port == CONFIG_UARTCON_PORT ) {
+	    //ESP_LOGI(TAG,"Filtered port");
 	    return 0;
 	}
 	if (xRingbufferSendAcquire(wifiToSerial, &item, p->tot_len+4, 0))

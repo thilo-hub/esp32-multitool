@@ -10,6 +10,7 @@
 
 #include "rf433.h"
 
+#if CONFIG_RF433
 
 static gptimer_handle_t gptimer = NULL;
 static QueueHandle_t rf433_msg_queue = NULL;
@@ -98,3 +99,4 @@ QueueHandle_t create_rf433_manager(gptimer_handle_t lgptimer)
 }
 
 			
+#endif

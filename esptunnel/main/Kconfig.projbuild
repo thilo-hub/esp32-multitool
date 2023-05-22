@@ -109,35 +109,6 @@ endmenu
         range ENV_GPIO_RANGE_MIN ENV_GPIO_IN_RANGE_MAX
         default 10
 
-menu "Wifi Configuration"
-    config EXAMPLE_BASIC_AUTH
-        bool "Basic Authentication"
-        default y
-        help
-            Basic Authentication is a method for an HTTP user agent (e.g. a web browser)
-            to provide a user name and password when making a request. It is the simplest
-            technique for enforcing access controls to web resources. because it doesn't
-            require cookies, session identifiers, or login pages; rather, it uses standard
-            fields in the HTTP header.
-            Note that, Basic Authentication is not encrypted channel and also easy to retrieve
-            credentials as they are sent in plain text format.
-
-    config EXAMPLE_BASIC_AUTH_USERNAME
-        string "Basic Authenticate User Name"
-        depends on EXAMPLE_BASIC_AUTH
-        default "ESP32"
-        help
-            The client's user name which used for basic authenticate.
-
-    config EXAMPLE_BASIC_AUTH_PASSWORD
-        string "Basic Authenticate Password"
-        depends on EXAMPLE_BASIC_AUTH
-        default "ESP32Webserver"
-        help
-            The client's password which used for basic authenticate.
-
-endmenu
-
 	config WEBSERVER
 	bool "Enable webinterface"
 	default n
@@ -147,7 +118,38 @@ menu "Webserver Configuration"
     config WEBSERVER_AUTOSTART
     	bool "Auto start webserver"
 	default n
-    config EXAMPLE_BASIC_AUTH
+
+    config UARTCON_ENABLE
+	depends on WEBSERVER
+    	bool "Enable remote console uart"
+	default false
+	select BASIC_AUTH
+
+    config UARTCON_UART  
+        depends on UARTCON_ENABLE
+    	int "ESP32 Uart # to use for console"
+    	default 1
+	help
+		ESP32 Uart to use to connect
+    config GPIO_UARTCON_TX  
+        depends on UARTCON_ENABLE
+	default 37
+        int "Uart TX pin"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+    config GPIO_UARTCON_RX  
+        depends on UARTCON_ENABLE
+	default 36
+        int "Uart RX pin"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+    config UARTCON_PORT 
+        depends on UARTCON_ENABLE
+	int "Port to listen for console"
+	default 9876
+    config GPIO_RESET_PIN
+        depends on BASIC_AUTH
+	int "Gpio to toggle to reset Beaglebone"
+	default 9
+    config BASIC_AUTH
         bool "Basic Authentication"
         default y
         help
@@ -159,54 +161,20 @@ menu "Webserver Configuration"
             Note that, Basic Authentication is not encrypted channel and also easy to retrieve
             credentials as they are sent in plain text format.
 
-    config EXAMPLE_BASIC_AUTH_USERNAME
+    config BASIC_AUTH_USERNAME
         string "Basic Authenticate User Name"
-        depends on EXAMPLE_BASIC_AUTH
+        depends on BASIC_AUTH
         default "ESP32"
         help
             The client's user name which used for basic authenticate.
 
-    config EXAMPLE_BASIC_AUTH_PASSWORD
+    config BASIC_AUTH_PASSWORD
         string "Basic Authenticate Password"
-        depends on EXAMPLE_BASIC_AUTH
+        depends on BASIC_AUTH
         default "ESP32Webserver"
         help
             The client's password which used for basic authenticate.
 
-endmenu
-
-    config UARTCON_ENABLE
-	depends on WEBSERVER
-    	bool "Enable remote console uart"
-	default false
-
-menu "Remote Uart Console"
-	depends on UARTCON_ENABLE && WEBSERVER
-
-    config UARTCON_UART  
-        depends on EXAMPLE_BASIC_AUTH
-    	int "Uart to use for console"
-    	default 2
-	help
-		ESP32 Uart to use to connect
-    config GPIO_UARTCON_TX  
-        depends on EXAMPLE_BASIC_AUTH
-	default 17
-        int "Uart TX pin"
-        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-    config GPIO_UARTCON_RX  
-        depends on EXAMPLE_BASIC_AUTH
-	default 16
-        int "Uart RX pin"
-        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-    config UARTCON_PORT 
-        depends on EXAMPLE_BASIC_AUTH
-	int "Port to listen for console"
-	default 9876
-    config GPIO_RESET_PIN
-        depends on EXAMPLE_BASIC_AUTH
-	int "Gpio to toggle to reset Beaglebone"
-	default 9
 endmenu
 
 	config RF433
