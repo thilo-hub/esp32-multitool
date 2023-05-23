@@ -35,7 +35,7 @@
 #include "uart2_io.h"
 #include "version.h"
 
-static const char *TAG = "tunif";
+static const char *TAG = "multitool";
 #define PROMPT_STR CONFIG_IDF_TARGET
 
 /*

@@ -10,6 +10,9 @@
 #include "serio.h"
 
 
+/*
+ * Output at network uart for handshakes
+ */
 
 int 
 myPrintf(const char *fmt,...)
@@ -23,6 +26,9 @@ myPrintf(const char *fmt,...)
 	return l;
 }
 
+/*
+ * Universal readline with character echoes
+ */
 
 char           *
 readLine(int uart, char *line, int len)
@@ -59,24 +65,3 @@ readLine(int uart, char *line, int len)
 }
 
 
-#if 0
-void 
-cmdLine(void *)
-{
-	char		line      [256];
-	printf("*****  TOOL Waiting *****\n");
-	while (1) {
-		readLine(UART_NUM_0, line, sizeof(line));
-		if (strcmp(line, "status") == 0) {
-			//networkStatus();
-			uartTunStatus();
-#if 0
-		} else if (strcmp(line, "reconnect") == 0) {
-			initializeWifi();
-#endif
-		} else {
-			printf("Read: %s\n", line);
-		}
-	}
-}
-#endif

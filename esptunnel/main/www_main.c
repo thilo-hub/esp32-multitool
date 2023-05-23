@@ -24,18 +24,18 @@
 #include "driver/gpio.h"
 #include <esp_http_server.h>
 #include <string.h>
-//#include "serio.h"
 #include "uart2_io.h"
 #include "cfg_parse.h"
 #include "wifi.h"
 
-#define DEBUG_UPLOAD 
+#define DEBUG_UPLOAD  // debug interface to send file to: test.html
 #define EXAMPLE_HTTP_QUERY_KEY_MAX_LEN  (64)
 
 /* A simple example that demonstrates how to create GET and POST
  * handlers for the web server.
  */
 
+int httpd_server_port = 80; // This port is filtered from tunnel
 #if CONFIG_WEBSERVER
 static const char *TAG = "webserver";
 
@@ -48,8 +48,6 @@ typedef struct {
 
 #define HTTPD_401      "401 UNAUTHORIZED"           /*!< HTTP Response 401 */
 
-#undef CONFIG_GPIO_RESET_PIN
-#define CONFIG_GPIO_RESET_PIN 8
 void resetBeaglebone(void *p) 
 {
     gpio_config_t io_conf = {};
@@ -456,7 +454,6 @@ esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
     return ESP_FAIL;
 }
 
-int httpd_server_port = 80;
 static httpd_handle_t httpdStartServer(void)
 {
     httpd_handle_t server = NULL;
@@ -468,14 +465,12 @@ static httpd_handle_t httpdStartServer(void)
     if (server_data) {
         ESP_LOGE(TAG, "File server already started");
 	return NULL;
-        // return ESP_ERR_INVALID_STATE;
     }
     /* Allocate memory for server data */
     server_data = calloc(1, sizeof(struct file_server_data));
     if (!server_data) {
         ESP_LOGE(TAG, "Failed to allocate memory for server data");
 	return NULL;
-        //return ESP_ERR_NO_MEM;
     }
     const char *base_path="/data/public";
     strlcpy(server_data->base_path, base_path,
@@ -554,11 +549,6 @@ int cmdHttpdStartServer(int argc, char **argv)
 	    }
 	}
     } else {
-	// ESP_ERROR_CHECK(nvs_flash_init());
-	// ESP_ERROR_CHECK(esp_netif_init());
-	// ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-	// ESP_ERROR_CHECK(wifi_connect());
 	initializeWifi();
 	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &httpdConnectHandler, &server));
 	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &httpdDisonnectHandler, &server));
@@ -583,7 +573,7 @@ void registerHttpdServer(void)
     for (int i=0;i<(sizeof(cmd)/sizeof(cmd[0]));i++){
 	    ESP_ERROR_CHECK( esp_console_cmd_register(cmd+i) );
     }
-#if 1 &&  CONFIG_WEBSERVER_AUTOSTART
+#if CONFIG_WEBSERVER_AUTOSTART
     char *ssid = getcfg("SSID");
     char *password   = getcfg("PW");
     if ( ssid && password ) {

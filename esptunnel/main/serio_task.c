@@ -13,8 +13,10 @@ initializeUartConsole(int baudRate)
 #ifdef CONFIG_IDF_TARGET_ESP32S3
 	ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, GPIO_NUM_45, GPIO_NUM_44, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 #else
-#error - not mainteained..
-	S0		ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, GPIO_NUM_1, GPIO_NUM_3, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+// THere are a number of places where the S3 is different. Currently only the S3 is ported.
+// most changes would be trivial (pin numbers for example)
+#error - not maintained..
+	ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, GPIO_NUM_1, GPIO_NUM_3, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 #endif
 }
 
@@ -43,10 +45,10 @@ uartTunRxTask(void *)
 		static uint8_t	buffer[2000];
 		//bigger than MTU
 
-			// Sync and receive header
-			do
+		// Sync and receive header
+		do {
 			uart_read_bytes(CONFIG_UARTIF_UART, &buffer[0], 1, portMAX_DELAY);
-		while (buffer[0] != 0xAA);
+		} while (buffer[0] != 0xAA);
 
 		uart_read_bytes(CONFIG_UARTIF_UART, &buffer[1], 3, portMAX_DELAY);
 

@@ -102,7 +102,7 @@ extern RingbufHandle_t serialToWifi,wifiToSerial;
 void my_post_trans_cb(spi_slave_transaction_t *trans) {
     
     gpio_set_level(SPIO_GPIO_HANDSHAKE, 1);
-#if 0
+#if 0 // this causes double free -- not sure why
     if ( trans->tx_buffer )
 	    vRingbufferReturnItem(wifiToSerial, (void*)trans->tx_buffer);
     trans->tx_buffer = NULL;
@@ -123,7 +123,6 @@ void spiStatus(void)
 void spiRxTxTask(void *)
 {
   size_t len;
-#define portMIN_DELAY 2
 #define SPI_MAXLEN 4000  
  static WORD_ALIGNED_ATTR char sendbuf[4097]="";
  static WORD_ALIGNED_ATTR char recvbuf[4097]="";

@@ -1,30 +1,15 @@
 #include <esp_wifi.h>
-// #include <esp_event.h>
 #include <esp_log.h>
-// #include <esp_system.h>
-// #include <esp_err.h>
-// #include <nvs_flash.h>
-// #include <sys/param.h>
-// #include <sys/dirent.h>
-// #include <sys/stat.h>
-// #include "nvs_flash.h"
 #include "esp_netif.h"
-// #include "esp_eth.h"
 #include <lwip/raw.h>
-// #include "protocol_examples_common.h"
-// #include "protocol_examples_utils.h"
-// #include "esp_tls_crypto.h"
-// #include "driver/gpio.h"
-// #include <esp_http_server.h>
 #include <string.h>
-// //#include "serio.h"
-// #include "uart2_io.h"
 #include "cfg_parse.h"
 #include "wifi_comm.h"
 #include "console.h"
 #include "version.h"
 
 #include "wifi.h"
+#define CONFIG_USE_STATIC_IP 1
 static const char *TAG = "wifi";
 
 // TODO: movie into struct
@@ -127,7 +112,7 @@ void initializeWifi(void)
 	wifi_config_t wifi_config = { 0};
     	strlcpy((char *)wifi_config.sta.ssid,networkName,sizeof(wifi_config.sta.ssid));
     	strlcpy((char *)wifi_config.sta.password,networkPass,sizeof(wifi_config.sta.password));
-#if 1 // no dhcp
+#if CONFIG_USE_STATIC_IP
 	esp_netif_ip_info_t ip_info;
 	ip_info.ip.addr = ESP_IP4TOADDR(staticIpAddress[0], staticIpAddress[1], staticIpAddress[2], staticIpAddress[3]);
 	ip_info.gw.addr = ESP_IP4TOADDR(staticGateway[0], staticGateway[1], staticGateway[2], staticGateway[3]);
@@ -161,11 +146,7 @@ void initializeWifi(void)
 	ESP_ERROR_CHECK( esp_netif_get_mac(netif_sta, mac));
     }
 }
-#if 0
-	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, onWifiEvent, NULL));
-	// ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &httpdConnectHandler, &server));
-	// ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &httpdDisonnectHandler, &server));
-#endif
+
 void networkStatus(void)
 {
 	printf("got ssid %s\n", networkName);
@@ -254,7 +235,6 @@ void tunnelWaitForPeer(void)
 int cmdWifiStart(int argc,char **argv)
 {
     // Check config for options and if available ...
-    //if (load_configuration() == ESP_OK )
     ESP_ERROR_CHECK(load_configuration());
     initializeWifi();
 
@@ -270,7 +250,7 @@ void registerWifi(void)
 	.command = "wifi",
 	.help = "Start or stop  wifi interface",
 	.hint = NULL,
-	.func = &cmdWifiStart
+	.func = &cmdWifiStart  // useless -- shoulnd be there
 	},
     };
     for (int i=0;i<(sizeof(cmd)/sizeof(cmd[0]));i++){

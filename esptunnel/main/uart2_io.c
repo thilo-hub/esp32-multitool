@@ -10,12 +10,8 @@
 #include "serio.h"
 #if CONFIG_UARTCON_ENABLE
 
-// #define CONFIG_UARTCON_UART  2
-// #define CONFIG_GPIO_UARTCON_TX  17
-// #define CONFIG_GPIO_UARTCON_RX  16
 #define CONFIG_GPIO_UARTCON_RTS  14
 #define CONFIG_GPIO_UARTCON_CTS  15
-// #define CONFIG_UARTCON_PORT 9876
 
 #define CONFIG_EXAMPLE_IPV4 1
 
@@ -26,13 +22,6 @@
 
 
 static const char *TAG = "UartIO";
-
-//RingbufHandle_t wifiToSerial = NULL, serialToWifi = NULL;
-
-// callback receiving bytes from tcp-port -- handing to uart
-
-// task waiting form bytes from uart and sending to tcp connection
-
 
 void uartConInitHw(int baudRate)
 {
@@ -47,7 +36,6 @@ void uartConInitHw(int baudRate)
 	ESP_ERROR_CHECK(uart_set_pin(CONFIG_UARTCON_UART, CONFIG_GPIO_UARTCON_TX, CONFIG_GPIO_UARTCON_RX, CONFIG_GPIO_UARTCON_RTS, CONFIG_GPIO_UARTCON_CTS));
 	ESP_ERROR_CHECK(uart_driver_install(CONFIG_UARTCON_UART, 256, 256, 0, NULL, 0));
 	ESP_ERROR_CHECK(uart_param_config(CONFIG_UARTCON_UART, &uartConfig));
-
 }
 
 
@@ -122,6 +110,7 @@ static void httpdTcpServerTask(void *pvParameters)
     }
 #endif
 #ifdef CONFIG_EXAMPLE_IPV6
+#error not really using/testing v6 - so there might be places missing or wrong
     if (addr_family == AF_INET6) {
         struct sockaddr_in6 *dest_addr_ip6 = (struct sockaddr_in6 *)&dest_addr;
         bzero(&dest_addr_ip6->sin6_addr.un, sizeof(dest_addr_ip6->sin6_addr.un));
@@ -202,32 +191,15 @@ CLEAN_UP:
     vTaskDelete(NULL);
 }
 
-
-#if 0
-static void uartTunTxTask(void *)
-{
-	size_t len;
-
-	while (true)
-	{
-		char *buffer = (char*)xRingbufferReceive(wifiToSerial, &len, portMAX_DELAY);
-		uart_write_bytes(CONFIG_UARTCON_UART, ep,len);
-		// uart_wsum += len;
-		vRingbufferReturnItem(wifiToSerial, buffer);
-	}
-}
-#endif
-
 int uartConStart(int argc, char **argv)
 {
     	static TaskHandle_t  tcpServer = NULL;
 	if ( tcpServer == NULL ) {
-	    uartConInitHw(115200);
+	    uartConInitHw(115200);  //TODO: make this part of the url
 	    int baudRate=115200;
 	    ESP_ERROR_CHECK( uart_wait_tx_done(CONFIG_UARTCON_UART, portMAX_DELAY) );
 	    ESP_ERROR_CHECK( uart_set_baudrate(CONFIG_UARTCON_UART, baudRate));
 
-	    // xTaskCreate(uartTunTxTask, "uart_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
 	    xTaskCreate(httpdTcpServerTask, "tcp_server", 4096, (void*)AF_INET, 5, &tcpServer);
 	}
 	return 0;

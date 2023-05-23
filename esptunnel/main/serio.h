@@ -1,5 +1,3 @@
-//
-#define UART_DEFAULT UART_NUM_2
 
 void		uartTunInitHw(int baudRate);
 void		uartTunStart(int baudRate);
