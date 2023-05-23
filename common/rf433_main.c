@@ -294,7 +294,7 @@ static int cmd_status(int argc, char **argv)
 return 0;
 }
 
-void register_rf433(void)
+void registerRf433(void)
 {
     setup_hw();
     const esp_console_cmd_t cmd[] = {

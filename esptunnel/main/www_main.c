@@ -568,7 +568,7 @@ return 0;
 
 
 #include "esp_console.h"
-void httpdRegisterServer(void)
+void registerHttpdServer(void)
 {
     const esp_console_cmd_t cmd[] = {
     {

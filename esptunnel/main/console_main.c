@@ -138,19 +138,17 @@ void app_main(void)
     register_nvs();
     register_spifs();
 #if CONFIG_RF433
-    register_rf433();
+    registerRf433();
 #endif
+    registerWifi();  // must be before wifi users...
 #ifdef CONFIG_UARTCON_ENABLE
     registerUartCon();
 #endif
-
-    void registerWifi(void);
-    registerWifi();  // must be before wifi users...
 #if CONFIG_WIFI_TUNNEL
     registerWifitun();
 #endif
 #if CONFIG_WEBSERVER
-    httpdRegisterServer();
+    registerHttpdServer();
 #endif
 
 #if defined(CONFIG_ESP_CONSOLE_UART_DEFAULT) || defined(CONFIG_ESP_CONSOLE_UART_CUSTOM)
