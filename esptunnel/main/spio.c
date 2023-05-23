@@ -112,7 +112,6 @@ void my_post_trans_cb(spi_slave_transaction_t *trans) {
 
 static unsigned int spi_read=0, spi_write=0, spi_err=0;
 
-extern "C" 
 void spiStatus(void)
 {
   printf("SPI Received: %u\n",spi_read);
@@ -167,7 +166,6 @@ void spiRxTxTask(void *)
   }
 }
 
-extern "C" {
 void dummy_tests(void)
 {
 #define COMPILE_CHECK( should_size, is_size ) do{ switch(1==1){ case is_size != is_size: /*FALSE*/; case (should_size == is_size): /*noop*/ return;  }}while(0)
@@ -175,11 +173,10 @@ void dummy_tests(void)
 	COMPILE_CHECK(4, sizeof(int));
 	COMPILE_CHECK(8, sizeof(long long));
 }
-}
 
 void initializeSpi(void)
 {
-	xTaskCreate(spiRxTxTask, "spi", 2048, nullptr, tskIDLE_PRIORITY , nullptr);
+	xTaskCreate(spiRxTxTask, "spi", 2048, NULL, tskIDLE_PRIORITY , NULL);
 }
 
 

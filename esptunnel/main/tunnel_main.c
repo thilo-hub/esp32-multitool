@@ -14,15 +14,13 @@
 #include <freertos/task.h>
 #include <lwip/raw.h>
 #include <nvs_flash.h>
-extern		"C" {
 #include "serio.h"
 #include "console.h"
 #include "wifi_comm.h"
 #include "cfg_parse.h"
 #include "version.h"
 #include "wifi.h"
-	void		tunnelWaitForPeer(void);
-}
+void		tunnelWaitForPeer(void);
 
 #if CONFIG_WIFI_TUNNEL
 
@@ -88,8 +86,7 @@ cmd_tunnelStatus(int argc, char **argv)
 	return 0;
 }
 #include "esp_console.h"
-extern		"C" void 
-registerWifitun(void)
+void registerWifitun(void)
 {
 	const esp_console_cmd_t cmd[] = {
 		{
