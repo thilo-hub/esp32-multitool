@@ -6,6 +6,7 @@ static long uart_rerr=0;
 static long uart_wsum=0;
 
 
+// Main uart-0 console
 void initializeUartConsole(int baudRate)
 {
 #ifdef CONFIG_IDF_TARGET_ESP32S3
@@ -16,7 +17,8 @@ void initializeUartConsole(int baudRate)
 #endif
 }
 
-void initializeUartNetworkHw(int baudRate)
+// Uart-2 network IN 
+void uartTunInitHw(int baudRate)
 {
 	uart_config_t uartConfig;
 	uartConfig.baud_rate = baudRate;
@@ -32,7 +34,7 @@ void initializeUartNetworkHw(int baudRate)
 }
 
 #if CONFIG_UARTIF_ENABLED
-static void uartRxTask(void *)
+static void uartTunRxTask(void *)
 {
 	while (true)
 	{
@@ -70,7 +72,7 @@ static void uartRxTask(void *)
 }
 
 
-static void uartTxTask(void *)
+static void uartTunTxTask(void *)
 {
 	size_t len;
 
@@ -94,7 +96,7 @@ static void uartTxTask(void *)
 }
 #endif
 
-void uartStatus(void)
+void uartTunStatus(void)
 {
 			printf("UART Received: %ld\n",uart_rsum);
 			printf("UART Send:     %ld\n",uart_wsum);
@@ -102,13 +104,13 @@ void uartStatus(void)
 }
 
 #if CONFIG_UARTIF_ENABLED
-void startUartNetwork(int baudRate)
+void uartTunStart(int baudRate)
 {
 	ESP_ERROR_CHECK( uart_wait_tx_done(CONFIG_UARTIF_UART, portMAX_DELAY) );
 	ESP_ERROR_CHECK( uart_set_baudrate(CONFIG_UARTIF_UART, baudRate));
 
-	xTaskCreate(uartRxTask, "uart_rx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
-	xTaskCreate(uartTxTask, "uart_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
+	xTaskCreate(uartTunRxTask, "uart_rx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
+	xTaskCreate(uartTunTxTask, "uart_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
 }
 #endif
 

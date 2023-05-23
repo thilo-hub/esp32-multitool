@@ -1,8 +1,8 @@
 // #define UART_DEFAULT UART_NUM_2
 
-void initializeUartNetworkHw(int baudRate);
-void startUartNetwork(int baudRate);
-void uartStatus(void);
+void uartTunInitHw(int baudRate);
+void uartTunStart(int baudRate);
+void uartTunStatus(void);
 void spiStatus(void);
 
 extern RingbufHandle_t wifiToSerial, serialToWifi;

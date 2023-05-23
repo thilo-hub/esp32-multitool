@@ -1,4 +1,4 @@
-void  register_uart(void);
-int startUartConsole(int argc, char **argv);
+void  registerUartCon(void);
+int uartConStart(int argc, char **argv);
 void initializeUartConsole(int baudRate);
 

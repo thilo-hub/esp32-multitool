@@ -88,9 +88,9 @@ void initializeWifi(void)
 	ESP_ERROR_CHECK( esp_netif_get_mac(netif_sta, mac));
     vTaskDelay(500 / portTICK_PERIOD_MS);
 	ESP_ERROR_CHECK(esp_event_loop_create_default());
-	// xTaskCreate(wifiTxTask, "wifi_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
-	// extern int cmd_start_webserver(int argc, char **argv);
-	// cmd_start_webserver(0,NULL); // this will recursivly call into here... but its protected by the init var
+	// xTaskCreate(wifiTunTxTask, "wifi_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
+	// extern int cmdHttpdStartServer(int argc, char **argv);
+	// cmdHttpdStartServer(0,NULL); // this will recursivly call into here... but its protected by the init var
     }
 }
 void networkStatus(void)
@@ -151,7 +151,7 @@ esp_err_t load_configuration(void)
 
 }
 // TODO:  make fail safe...
-void waitForNetworkPeer(void)
+void tunnelWaitForPeer(void)
 {
     char *nw = getcfg("SSID");
     int peerAnswered=0;
@@ -172,7 +172,7 @@ void waitForNetworkPeer(void)
     }
 }
 
-int cmd_start_wifi(int argc,char **argv)
+int cmdWifiStart(int argc,char **argv)
 {
     // Check config for options and if available ...
     //if (load_configuration() == ESP_OK )
@@ -184,25 +184,26 @@ int cmd_start_wifi(int argc,char **argv)
 
 
 #include "esp_console.h"
-void register_wifi(void)
+void registerWifi(void)
     {
     const esp_console_cmd_t cmd[] = {
 	{
 	.command = "wifi",
 	.help = "Start or stop  wifi interface",
 	.hint = NULL,
-	.func = &cmd_start_wifi
+	.func = &cmdWifiStart
 	},
     };
     for (int i=0;i<(sizeof(cmd)/sizeof(cmd[0]));i++){
 	ESP_ERROR_CHECK( esp_console_cmd_register(cmd+i) );
+    }
     ESP_LOGI(TAG,"Start wifi");
-    cmd_start_wifi(0,NULL);
+    cmdWifiStart(0,NULL);
 #if 0 &&  CONFIG_WEBSERVER_AUTOSTART
     char *ssid = getcfg("SSID");
     char *password   = getcfg("PW");
     if ( ssid && password ) {
-	cmd_start_webserver(0,NULL);
+	cmdHttpdStartServer(0,NULL);
     }
 #endif
 }

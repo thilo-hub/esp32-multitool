@@ -34,7 +34,7 @@ static const char *TAG = "UartIO";
 // task waiting form bytes from uart and sending to tcp connection
 
 
-void initializeUartConsoleHw(int baudRate)
+void uartConInitHw(int baudRate)
 {
 	uart_config_t uartConfig;
 	uartConfig.baud_rate = baudRate;
@@ -51,7 +51,7 @@ void initializeUartConsoleHw(int baudRate)
 }
 
 
-static void uartRxTask(void *p)
+static void uartConRxTask(void *p)
 {
 	const int sock = (int) p;
 	int len=1;
@@ -78,12 +78,12 @@ static void uartRxTask(void *p)
 }
 
 
-static void do_retransmit(const int sock)
+static void doRetransmit(const int sock)
 {
     int len;
     char rx_buffer[128];
     TaskHandle_t  rxTask = NULL;
-    xTaskCreate(uartRxTask, "uart_rx", 2048, (void *)sock, tskIDLE_PRIORITY + 2, &rxTask);
+    xTaskCreate(uartConRxTask, "uart_rx", 2048, (void *)sock, tskIDLE_PRIORITY + 2, &rxTask);
     do {
         len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
         if (len < 0) {
@@ -101,7 +101,7 @@ static void do_retransmit(const int sock)
 }
 
 
-static void tcp_server_task(void *pvParameters)
+static void httpdTcpServerTask(void *pvParameters)
 {
     char addr_str[128];
     int addr_family = (int)pvParameters;
@@ -191,7 +191,7 @@ static void tcp_server_task(void *pvParameters)
 #endif
         ESP_LOGI(TAG, "Socket accepted ip address: %s", addr_str);
 
-        do_retransmit(sock);
+        doRetransmit(sock);
 
         shutdown(sock, 0);
         close(sock);
@@ -204,7 +204,7 @@ CLEAN_UP:
 
 
 #if 0
-static void uartTxTask(void *)
+static void uartTunTxTask(void *)
 {
 	size_t len;
 
@@ -218,22 +218,22 @@ static void uartTxTask(void *)
 }
 #endif
 
-int startUartConsole(int argc, char **argv)
+int uartConStart(int argc, char **argv)
 {
     	static TaskHandle_t  tcpServer = NULL;
 	if ( tcpServer == NULL ) {
-	    initializeUartConsoleHw(115200);
+	    uartConInitHw(115200);
 	    int baudRate=115200;
 	    ESP_ERROR_CHECK( uart_wait_tx_done(CONFIG_UARTCON_UART, portMAX_DELAY) );
 	    ESP_ERROR_CHECK( uart_set_baudrate(CONFIG_UARTCON_UART, baudRate));
 
-	    // xTaskCreate(uartTxTask, "uart_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
-	    xTaskCreate(tcp_server_task, "tcp_server", 4096, (void*)AF_INET, 5, &tcpServer);
+	    // xTaskCreate(uartTunTxTask, "uart_tx", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
+	    xTaskCreate(httpdTcpServerTask, "tcp_server", 4096, (void*)AF_INET, 5, &tcpServer);
 	}
 	return 0;
 }
 
-void register_uart(void)
+void registerUartCon(void)
 {
     
 
@@ -242,7 +242,7 @@ void register_uart(void)
         .command = "uart",
         .help = "Start secondary uart interface",
         .hint = NULL,
-        .func = &startUartConsole,
+        .func = &uartConStart,
     }
     };
     for (int i=0;i<(sizeof(cmd)/sizeof(cmd[0]));i++){

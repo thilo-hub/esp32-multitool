@@ -135,7 +135,7 @@ void spiRxTxTask(void *)
 	char *buffer = (char*)xRingbufferReceive(wifiToSerial, &len, 0);
 	if (buffer) {
 		spi_write += len;
-		checksum_make((unsigned int*)buffer,(unsigned int *)(buffer+4),len-4);
+		checksumMake((unsigned int*)buffer,(unsigned int *)(buffer+4),len-4);
 		memcpy(sendbuf,buffer,len);
 		vRingbufferReturnItem(wifiToSerial, (void*)buffer);
 		t.tx_buffer=sendbuf;
@@ -158,7 +158,7 @@ void spiRxTxTask(void *)
 	}
 	unsigned int *hdr = (unsigned int *)recvbuf; // trans->rx_buffer;
 	int len;
-	if ( (len = checksum_check(hdr,hdr+1,t.trans_len/8)) > 2 ) {
+	if ( (len = checksumCheck(hdr,hdr+1,t.trans_len/8)) > 2 ) {
 	    // TODO: check if fewer copies possible...
 	    xRingbufferSend(serialToWifi, &hdr[1], len, 1000);
 	    spi_read += len;

@@ -69,7 +69,7 @@ void cmdLine(void *)
 		readLine(UART_NUM_0,line,sizeof(line));
 		if ( strcmp(line,"status") == 0 ) {
 			// networkStatus();
-			uartStatus();
+			uartTunStatus();
 #if 0
 		} else if ( strcmp(line,"reconnect") == 0 ) {
 			initializeWifi();

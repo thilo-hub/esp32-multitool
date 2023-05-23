@@ -9,7 +9,7 @@
 //  1  : incomplete message
 static const unsigned int mask[] = { 0xff,0xffff,0xffffff };
 
-int checksum_check(unsigned int *hdr,void *buffer,int len)
+int checksumCheck(unsigned int *hdr,void *buffer,int len)
 {
     // Message:
     unsigned int C = *hdr++;
@@ -43,7 +43,7 @@ int checksum_check(unsigned int *hdr,void *buffer,int len)
     return dlen;
 }
 
-void checksum_build(void *obuffer, void *buffer,int len)
+void checksumBuild(void *obuffer, void *buffer,int len)
 {
   unsigned int  C=len;
   unsigned int  rlen = len & ~3;
@@ -62,7 +62,7 @@ void checksum_build(void *obuffer, void *buffer,int len)
 }
 #if 1
 
-void checksum_make(unsigned int *hdr, void *buffer,int len)
+void checksumMake(unsigned int *hdr, void *buffer,int len)
 {
   unsigned int  C=len;
   unsigned int  rlen = len & ~3;
@@ -88,9 +88,9 @@ void main(){
 	unsigned int hdr;
 	int len;
 	while( (len = read(0,buffer,sizeof(buffer))) > 0){
-		checksum_make(&hdr,buffer,len);
+		checksumMake(&hdr,buffer,len);
 		//buffer[4] ^= 1;
-		int v = checksum_check(&hdr,buffer,len);
+		int v = checksumCheck(&hdr,buffer,len);
 		if ( v != len ) {
 			fprintf(stderr,"Failed checksum %d\n",v);
 			fprintf(stderr,"Header:  %08x\n",hdr);

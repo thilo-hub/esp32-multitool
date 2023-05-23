@@ -91,7 +91,7 @@ static char *http_auth_basic(const char *username, const char *password)
 }
 
 /* An HTTP GET handler */
-static esp_err_t basic_auth_get_handler(httpd_req_t *req)
+static esp_err_t httpdAuthGetHandler(httpd_req_t *req)
 {
     char *buf = NULL;
     size_t buf_len = 0;
@@ -141,7 +141,7 @@ static esp_err_t basic_auth_get_handler(httpd_req_t *req)
             httpd_resp_send(req, basic_auth_resp, strlen(basic_auth_resp));
             free(basic_auth_resp);
 #if CONFIG_UARTCON_ENABLE
-	    startUartConsole(0,NULL);
+	    uartConStart(0,NULL);
 #endif
 	    httpd_req_get_url_query_str(req, buf, buf_len);
 	    if (strcmp(buf,"reset") == 0) {
@@ -166,11 +166,11 @@ static esp_err_t basic_auth_get_handler(httpd_req_t *req)
 static httpd_uri_t basic_auth = {
     .uri       = "/basic_auth",
     .method    = HTTP_GET,
-    .handler   = basic_auth_get_handler,
+    .handler   = httpdAuthGetHandler,
 };
 
 
-static void httpd_register_basic_auth(httpd_handle_t server)
+static void httpdRegisterBasicAuth(httpd_handle_t server)
 {
     basic_auth_info_t *basic_auth_info = calloc(1, sizeof(basic_auth_info_t));
     if (basic_auth_info) {
@@ -246,7 +246,7 @@ struct file_server_data {
 
 /* Handler to redirect incoming GET request for /index.html to /
  * This can be overridden by uploading file with same name */
-static esp_err_t index_html_get_handler(httpd_req_t *req)
+static esp_err_t httpdIndexHtmlGetHandler(httpd_req_t *req)
 {
     httpd_resp_set_status(req, "307 Temporary Redirect");
     httpd_resp_set_hdr(req, "Location", "/");
@@ -286,7 +286,7 @@ static esp_err_t hello_get_handler(httpd_req_t *req)
         /* If file not present on SPIFFS check if URI
          * corresponds to one of the hardcoded paths */
         if (strcmp(filename, "/index.html") == 0) {
-            return index_html_get_handler(req);
+            return httpdIndexHtmlGetHandler(req);
 #if 0
         } else if (strcmp(filename, "/favicon.ico") == 0) {
             return favicon_get_handler(req);
@@ -360,7 +360,7 @@ static esp_err_t hello_get_handler(httpd_req_t *req)
 
 esp_err_t send_file(char *file) ;
 
-static esp_err_t buttons_get_handler(httpd_req_t *req)
+static esp_err_t httpdButtonsGetHandler(httpd_req_t *req)
 {
     char*  buf;
 
@@ -380,7 +380,7 @@ static esp_err_t buttons_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-static esp_err_t rf433_post_handler(httpd_req_t *req)
+static esp_err_t httpdRf433PostHandler(httpd_req_t *req)
 {
     char buf[100];
     int ret, remaining = req->content_len;
@@ -455,7 +455,7 @@ esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
 }
 
 int httpd_server_port = 80;
-static httpd_handle_t start_webserver(void)
+static httpd_handle_t httpdStartServer(void)
 {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -487,14 +487,14 @@ static httpd_handle_t start_webserver(void)
         ESP_LOGI(TAG, "Registering URI handlers");
 #if CONFIG_BASIC_AUTH
 	// need to register before wildcard...
-	httpd_register_basic_auth(server);
+	httpdRegisterBasicAuth(server);
 #endif
 	httpd_uri_t uris[] = {
-	    { .uri       = "/send",       .method    = HTTP_POST, .handler   = rf433_post_handler,  .user_ctx  = NULL },
-	    { .uri       = "/buttons",    .method    = HTTP_GET,  .handler   = buttons_get_handler, .user_ctx  = NULL },
+	    { .uri       = "/send",       .method    = HTTP_POST, .handler   = httpdRf433PostHandler,  .user_ctx  = NULL },
+	    { .uri       = "/buttons",    .method    = HTTP_GET,  .handler   = httpdButtonsGetHandler, .user_ctx  = NULL },
 	    { .uri       = "/*",           .method    = HTTP_GET,  .handler   = hello_get_handler,   .user_ctx  = server_data },
 #if 0 //  CONFIG_BASIC_AUTH
-	    { .uri       = "/basic_auth", .method    = HTTP_GET, .handler   = basic_auth_get_handler, }
+	    { .uri       = "/basic_auth", .method    = HTTP_GET, .handler   = httpdAuthGetHandler, }
 #endif
 	};
 	for(const httpd_uri_t *up=uris;up<(uris+sizeof(uris)/sizeof(uris[0]));up++){
@@ -507,19 +507,19 @@ static httpd_handle_t start_webserver(void)
     return NULL;
 }
 
-static esp_err_t stop_webserver(httpd_handle_t server)
+static esp_err_t httpdStopServer(httpd_handle_t server)
 {
     // Stop the httpd server
     return httpd_stop(server);
 }
 
-static void disconnect_handler(void* arg, esp_event_base_t event_base,
+static void httpdDisonnectHandler(void* arg, esp_event_base_t event_base,
                                int32_t event_id, void* event_data)
 {
     httpd_handle_t* server = (httpd_handle_t*) arg;
     if (*server) {
         ESP_LOGI(TAG, "Stopping webserver");
-        if (stop_webserver(*server) == ESP_OK) {
+        if (httpdStopServer(*server) == ESP_OK) {
             *server = NULL;
         } else {
             ESP_LOGE(TAG, "Failed to stop http server");
@@ -527,17 +527,17 @@ static void disconnect_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-static void connect_handler(void* arg, esp_event_base_t event_base,
+static void httpdConnectHandler(void* arg, esp_event_base_t event_base,
                             int32_t event_id, void* event_data)
 {
     httpd_handle_t* server = (httpd_handle_t*) arg;
     if (*server == NULL) {
         ESP_LOGI(TAG, "Starting webserver");
-        *server = start_webserver();
+        *server = httpdStartServer();
     }
 }
 
-int cmd_start_webserver(int argc, char **argv)
+int cmdHttpdStartServer(int argc, char **argv)
 {
     static httpd_handle_t server = NULL;
 
@@ -545,7 +545,7 @@ int cmd_start_webserver(int argc, char **argv)
     {
 	if (argc > 1 && strcmp("stop",argv[1]) == 0 ){
 	    ESP_LOGI(TAG, "Stopping webserver");
-	    if (stop_webserver(server) == ESP_OK) {
+	    if (httpdStopServer(server) == ESP_OK) {
 		server = NULL;
 	    } else {
 		ESP_LOGE(TAG, "Failed to stop http server");
@@ -558,24 +558,24 @@ int cmd_start_webserver(int argc, char **argv)
 
 	// ESP_ERROR_CHECK(wifi_connect());
 	//initializeWifi();
-	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
-	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
+	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &httpdConnectHandler, &server));
+	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &httpdDisonnectHandler, &server));
 
-	server = start_webserver();
+	server = httpdStartServer();
     }
 return 0;
 }
 
 
 #include "esp_console.h"
-void register_webserver(void)
+void httpdRegisterServer(void)
 {
     const esp_console_cmd_t cmd[] = {
     {
         .command = "www",
         .help = "Start or stop  webserver",
         .hint = NULL,
-        .func = &cmd_start_webserver
+        .func = &cmdHttpdStartServer
 	},
     };
     for (int i=0;i<(sizeof(cmd)/sizeof(cmd[0]));i++){
@@ -585,7 +585,7 @@ void register_webserver(void)
     char *ssid = getcfg("SSID");
     char *password   = getcfg("PW");
     if ( ssid && password ) {
-	cmd_start_webserver(0,NULL);
+	cmdHttpdStartServer(0,NULL);
     }
 #endif
 }

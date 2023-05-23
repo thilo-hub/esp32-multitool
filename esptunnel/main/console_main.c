@@ -141,15 +141,16 @@ void app_main(void)
     register_rf433();
 #endif
 #ifdef CONFIG_UARTCON_ENABLE
-    register_uart();
+    registerUartCon();
 #endif
 
-    register_wifi();  // must be before wifi users...
+    void registerWifi(void);
+    registerWifi();  // must be before wifi users...
 #if CONFIG_WIFI_TUNNEL
-    register_wifitun();
+    registerWifitun();
 #endif
 #if CONFIG_WEBSERVER
-    register_webserver();
+    httpdRegisterServer();
 #endif
 
 #if defined(CONFIG_ESP_CONSOLE_UART_DEFAULT) || defined(CONFIG_ESP_CONSOLE_UART_CUSTOM)

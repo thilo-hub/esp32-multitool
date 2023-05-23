@@ -21,7 +21,7 @@ extern "C" {
 #include "cfg_parse.h"
 #include "version.h"
 #include "wifi.h"
-void waitForNetworkPeer(void);
+void tunnelWaitForPeer(void);
 }
 
 #if CONFIG_WIFI_TUNNEL
@@ -37,7 +37,7 @@ int baudRate = 115200;
 
 RingbufHandle_t wifiToSerial, serialToWifi;
 void wifiTunnel(void *) {
-    initializeUartNetworkHw(115200); // set baudrate for config
+    uartTunInitHw(115200); // set baudrate for config
 
     myPrintf("\n\nready to receive configuration\n\n");
     printf("\n\nready to receive configuration\n\n");
@@ -61,17 +61,17 @@ void wifiTunnel(void *) {
 	    while(1) {;} //hang
     }
   
-waitForNetworkPeer();
+tunnelWaitForPeer();
 
 #if CONFIG_UARTIF_ENABLED
-    startUartNetwork(baudRate);
+    uartTunStart(baudRate);
 #endif
 #if CONFIG_SPIO_ENABLED
     initializeSpi();
 #endif
 
     // Keep as wifi-tx task...
-    wifiTxTask(NULL);
+    wifiTunTxTask(NULL);
 }
 
 
@@ -81,11 +81,11 @@ static int cmd_tunnelStatus(int argc, char **argv)
 #if CONFIG_SPIO_ENABLED
         spiStatus();
 #endif
-	uartStatus();
+	uartTunStatus();
 	return 0;
 }
 #include "esp_console.h"
-extern "C" void register_wifitun(void)
+extern "C" void registerWifitun(void)
 {
     const esp_console_cmd_t cmd[] = {
 	    {
