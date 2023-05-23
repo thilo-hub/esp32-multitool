@@ -1,6 +1,7 @@
 /*
-Pins in use. The SPI Master can use the GPIO mux, so feel free to change these if needed.
-*/
+ * Pins in use. The SPI Master can use the GPIO mux, so feel free to change
+ * these if needed.
+ */
 #if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
 #define GPIO_HANDSHAKE GPIO_NUM_2
 #define GPIO_MOSI 12
@@ -36,7 +37,7 @@ Pins in use. The SPI Master can use the GPIO mux, so feel free to change these i
 #define GPIO_SCLK GPIO_NUM_12
 #define GPIO_CS GPIO_NUM_10
 
-#endif //CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
+#endif	/* //CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 */
 
 
 
@@ -47,5 +48,3 @@ Pins in use. The SPI Master can use the GPIO mux, so feel free to change these i
 #define RCV_HOST    SPI2_HOST
 
 #endif
-
-
