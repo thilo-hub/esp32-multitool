@@ -12,7 +12,6 @@ static const char *TAG = "wifidp";
 
 static struct raw_pcb *rawIcmp, *rawIgmp, *rawUdp, *rawUdpLite, *rawTcp;
 
-
 extern int httpd_server_port;
 u8_t onRawInputFilter(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *addr)
 {
@@ -23,7 +22,7 @@ u8_t onRawInputFilter(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_a
 	u16_t  port =o2<<8 | o3;
 	    //ESP_LOGI(TAG,"port %d %d",o2, o3);
 	if ( port == httpd_server_port || port == CONFIG_UARTCON_PORT ) {
-	    //ESP_LOGI(TAG,"Filtered port");
+	    // ESP_LOGI(TAG,"Filtered port");
 	    return 0;
 	}
 	if (xRingbufferSendAcquire(wifiToSerial, &item, p->tot_len+4, 0))
@@ -48,39 +47,45 @@ u8_t onRawInput(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t 
 	return 1; // stop further processing by lwip
 }
 
-extern wifi_interface_t wirelessInterface;
+void installRawIf(void) 
+{
+    ESP_LOGI(TAG,"Raw interface loaded");
+	rawIcmp = raw_new(IP_PROTO_ICMP);
+	rawIgmp = raw_new(IP_PROTO_IGMP);
+	rawUdp = raw_new(IP_PROTO_UDP);
+	rawUdpLite = raw_new(IP_PROTO_UDPLITE);
+	rawTcp = raw_new(IP_PROTO_TCP);
+
+	raw_set_flags(rawIcmp, RAW_FLAGS_HDRINCL);
+	raw_set_flags(rawIgmp, RAW_FLAGS_HDRINCL);
+	raw_set_flags(rawUdp, RAW_FLAGS_HDRINCL);
+	raw_set_flags(rawUdpLite, RAW_FLAGS_HDRINCL);
+	raw_set_flags(rawTcp, RAW_FLAGS_HDRINCL);
+
+	raw_recv(rawIcmp, onRawInput, NULL);
+	raw_recv(rawIgmp, onRawInput, NULL);
+	raw_recv(rawUdp, onRawInput, NULL);
+	raw_recv(rawUdpLite, onRawInput, NULL);
+	raw_recv(rawTcp, onRawInputFilter, NULL);
+}
+
+
 void onWifiEvent(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
-	switch (event_id)
-	{
-		case WIFI_EVENT_STA_START:
-			rawIcmp = raw_new(IP_PROTO_ICMP);
-			rawIgmp = raw_new(IP_PROTO_IGMP);
-			rawUdp = raw_new(IP_PROTO_UDP);
-			rawUdpLite = raw_new(IP_PROTO_UDPLITE);
-			rawTcp = raw_new(IP_PROTO_TCP);
-
-			raw_set_flags(rawIcmp, RAW_FLAGS_HDRINCL);
-			raw_set_flags(rawIgmp, RAW_FLAGS_HDRINCL);
-			raw_set_flags(rawUdp, RAW_FLAGS_HDRINCL);
-			raw_set_flags(rawUdpLite, RAW_FLAGS_HDRINCL);
-			raw_set_flags(rawTcp, RAW_FLAGS_HDRINCL);
-
-			raw_recv(rawIcmp, onRawInput, NULL);
-			raw_recv(rawIgmp, onRawInput, NULL);
-			raw_recv(rawUdp, onRawInput, NULL);
-			raw_recv(rawUdpLite, onRawInput, NULL);
-			raw_recv(rawTcp, onRawInputFilter, NULL);
-			esp_wifi_connect();
-			break;
-		case WIFI_EVENT_STA_CONNECTED:
-			break;
-		case WIFI_EVENT_STA_DISCONNECTED: // connection lost or AP not found during scan
-			esp_wifi_connect(); // try to reconnect
-			break;
-		default:
-			break;
-	}
+    switch (event_id)
+    {
+	case WIFI_EVENT_STA_START:
+	    installRawIf();
+	    // esp_wifi_connect();
+		break;
+	case WIFI_EVENT_STA_CONNECTED:
+		break;
+	case WIFI_EVENT_STA_DISCONNECTED: // connection lost or AP not found during scan
+		//esp_wifi_connect(); // try to reconnect
+		break;
+	default:
+		break;
+    }
 }
 
 

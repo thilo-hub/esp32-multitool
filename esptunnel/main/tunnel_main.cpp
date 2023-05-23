@@ -36,6 +36,9 @@ extern void initializeSpi(void);
 int baudRate = 115200;
 
 RingbufHandle_t wifiToSerial, serialToWifi;
+
+extern wifi_interface_t wirelessInterface;
+
 void wifiTunnel(void *) {
     uartTunInitHw(115200); // set baudrate for config
 
@@ -49,19 +52,16 @@ void wifiTunnel(void *) {
 
     myPrintf("Register tunnel\n");
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, onWifiEvent, NULL));
-
+    installRawIf();
     // vTaskDelay(500 / portTICK_PERIOD_MS);
     // ESP_ERROR_CHECK(esp_event_loop_create_default());
     
 
     wifiToSerial = xRingbufferCreate(1024 * 32, RINGBUF_TYPE_NOSPLIT);
     serialToWifi = xRingbufferCreate(1024 * 64, RINGBUF_TYPE_NOSPLIT);
-    if (!serialToWifi || !wifiToSerial ){
-	    printf("Failuer ringbuff\n");
-	    while(1) {;} //hang
-    }
+    ESP_ERROR_CHECK(!serialToWifi || !wifiToSerial);
   
-tunnelWaitForPeer();
+    tunnelWaitForPeer();
 
 #if CONFIG_UARTIF_ENABLED
     uartTunStart(baudRate);
@@ -70,7 +70,7 @@ tunnelWaitForPeer();
     initializeSpi();
 #endif
 
-    // Keep as wifi-tx task...
+    // Continue as endless wifi-tx task...
     wifiTunTxTask(NULL);
 }
 
@@ -90,7 +90,7 @@ extern "C" void registerWifitun(void)
     const esp_console_cmd_t cmd[] = {
 	    {
 		.command = "tunnel",
-		.help = "Start tunneling",
+		.help = "Tunnel status",
 		.hint = NULL,
 		.func = &cmd_tunnelStatus,
 		.argtable = NULL,

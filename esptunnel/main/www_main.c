@@ -48,18 +48,20 @@ typedef struct {
 
 #define HTTPD_401      "401 UNAUTHORIZED"           /*!< HTTP Response 401 */
 
+#undef CONFIG_GPIO_RESET_PIN
+#define CONFIG_GPIO_RESET_PIN 8
 void resetBeaglebone(void *p) 
 {
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.mode = GPIO_MODE_OUTPUT_OD;
     io_conf.pin_bit_mask = (1ULL<<CONFIG_GPIO_RESET_PIN);
     io_conf.pull_down_en = 0;
     io_conf.pull_up_en = 1;
     gpio_config(&io_conf);
-    gpio_set_level(CONFIG_GPIO_RESET_PIN, 0);
-    vTaskDelay(pdMS_TO_TICKS(100));
     gpio_set_level(CONFIG_GPIO_RESET_PIN, 1);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    gpio_set_level(CONFIG_GPIO_RESET_PIN, 0);
     vTaskDelete(NULL);
 }
 
@@ -513,7 +515,7 @@ static esp_err_t httpdStopServer(httpd_handle_t server)
     return httpd_stop(server);
 }
 
-static void httpdDisonnectHandler(void* arg, esp_event_base_t event_base,
+void httpdDisonnectHandler(void* arg, esp_event_base_t event_base,
                                int32_t event_id, void* event_data)
 {
     httpd_handle_t* server = (httpd_handle_t*) arg;
@@ -527,7 +529,7 @@ static void httpdDisonnectHandler(void* arg, esp_event_base_t event_base,
     }
 }
 
-static void httpdConnectHandler(void* arg, esp_event_base_t event_base,
+void httpdConnectHandler(void* arg, esp_event_base_t event_base,
                             int32_t event_id, void* event_data)
 {
     httpd_handle_t* server = (httpd_handle_t*) arg;
@@ -557,7 +559,7 @@ int cmdHttpdStartServer(int argc, char **argv)
 	// ESP_ERROR_CHECK(esp_event_loop_create_default());
 
 	// ESP_ERROR_CHECK(wifi_connect());
-	//initializeWifi();
+	initializeWifi();
 	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &httpdConnectHandler, &server));
 	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &httpdDisonnectHandler, &server));
 
@@ -581,7 +583,7 @@ void registerHttpdServer(void)
     for (int i=0;i<(sizeof(cmd)/sizeof(cmd[0]));i++){
 	    ESP_ERROR_CHECK( esp_console_cmd_register(cmd+i) );
     }
-#if 0 &&  CONFIG_WEBSERVER_AUTOSTART
+#if 1 &&  CONFIG_WEBSERVER_AUTOSTART
     char *ssid = getcfg("SSID");
     char *password   = getcfg("PW");
     if ( ssid && password ) {
