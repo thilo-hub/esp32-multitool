@@ -9,12 +9,13 @@
 #include "version.h"
 
 #include "wifi.h"
-#define CONFIG_USE_STATIC_IP 1
+// #define CONFIG_USE_STATIC_IP 1
 static const char *TAG = "wifi";
 
 // TODO: movie into struct
 static esp_netif_t *netif_sta;
-static int staticIpAddress[4], staticGateway[4], staticNetMask[4]; // STA only
+// static int staticIpAddress[4], staticGateway[4], staticNetMask[4]; // STA only
+esp_netif_ip_info_t localNetwork;
 static char networkName[64];
 static char networkPass[64] = ""; // unprotected by default
 static int wirelessChannel;
@@ -23,6 +24,59 @@ static uint8_t wirelessProtocols;
 uint8_t mac[NETIF_MAX_HWADDR_LEN];
 
 extern int baudRate;
+char *tunnel= NULL;
+char *dnsserver = NULL;
+
+#include <esp_wifi_netif.h>
+
+void esp_netif_free_rx_buffer(void *h, void* buffer);
+
+
+esp_err_t esp_netif_receiveTj(esp_netif_t *esp_netif, void *buffer, size_t len, void *eb)
+{
+    // f412fa416628-589cfc10ffeb- 08 00 45 00 00 31 00 00 40 00 3f 06 b0 67 c0 a8 09 81 c0 a8 00 8e eb d0 26 94 
+    // 0            6             12 13 14          18          22 23       26          30          34    36
+    uint8_t *p=buffer;
+    if ( len > 34 && p[12] == 8 && p[13] == 0 && p[14] == 0x45 && p[23] == 6 && p[36]== 0x26 && p[37] == 0x94 ) {
+    ESP_LOGI(TAG, "Received data: ptr:%p, size:%d", buffer, len);
+	    // It's ipv4-tcp dst port 9876 
+	int i;
+	for(i=0; i<len && i<64;i++) {
+	    printf(" %02x",((uint8_t *)buffer)[i]);
+	}
+	printf("\n");
+    }
+    return esp_netif_receive(esp_netif,buffer,len,eb);
+
+    // esp_netif_transmit(esp_netif, buffer, len);
+    if (eb) {
+        esp_netif_free_rx_buffer(esp_netif, eb);
+    }
+    return ESP_OK;
+}
+
+
+void dmp_frames(int start)
+{
+    // register CB to dump received
+// esp_err_t esp_wifi_register_if_rxcb(wifi_netif_driver_t ifx, esp_netif_receive_t fn, void * arg)
+        void *driver = esp_netif_get_io_driver(netif_sta);
+	if ( driver == NULL ) {
+	    ESP_LOGI(TAG,"Failed get_io_driver");
+	    return;
+	}
+	esp_err_t ret;
+	esp_netif_receive_t fn=esp_netif_receive;
+	if ( start )
+	    fn = esp_netif_receiveTj;
+	if ((ret = esp_wifi_register_if_rxcb(driver,  fn, netif_sta)) != ESP_OK) {
+        ESP_LOGE(TAG, "esp_wifi_register_if_rxcb for if=%p failed with %d", driver, ret);
+        return; // ESP_FAIL;
+    }
+
+    //ESP_ERROR_CHECK( esp_wifi_register_if_rxcb() )
+}
+
 
 void tstEvent(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -70,7 +124,20 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         ESP_LOGI(TAG,"connect to the AP fail");
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+	localNetwork = event->ip_info;
+
+        ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&localNetwork.ip));
+        ESP_LOGI(TAG, "got gw:" IPSTR, IP2STR(&localNetwork.gw));
+        ESP_LOGI(TAG, "got msk:" IPSTR, IP2STR(&localNetwork.netmask));
+
+	static char tun[64];
+	ESP_LOGI(TAG, "TN: %s ->",tunnel);
+	sprintf(tun,"sta " IPSTR " " IPSTR " " IPSTR " %d",
+	    IP2STR(&localNetwork.ip), IP2STR(&localNetwork.gw), IP2STR(&localNetwork.netmask), baudRate);
+	tunnel = tun;
+
+	// ip_info_t UNNEL=sta 10.1.1.73 10.1.1.9 255.255.255.0 3500000
+
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
@@ -92,6 +159,9 @@ void initializeWifi(void)
 
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+	const char *hn=getcfg("HOSTNAME");
+	if ( hn )
+	    esp_netif_set_hostname(netif_sta,hn);
 
 
 	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, tstEvent, NULL));
@@ -113,13 +183,9 @@ void initializeWifi(void)
     	strlcpy((char *)wifi_config.sta.ssid,networkName,sizeof(wifi_config.sta.ssid));
     	strlcpy((char *)wifi_config.sta.password,networkPass,sizeof(wifi_config.sta.password));
 #if CONFIG_USE_STATIC_IP
-	esp_netif_ip_info_t ip_info;
-	ip_info.ip.addr = ESP_IP4TOADDR(staticIpAddress[0], staticIpAddress[1], staticIpAddress[2], staticIpAddress[3]);
-	ip_info.gw.addr = ESP_IP4TOADDR(staticGateway[0], staticGateway[1], staticGateway[2], staticGateway[3]);
-	ip_info.netmask.addr = ESP_IP4TOADDR(staticNetMask[0], staticNetMask[1], staticNetMask[2], staticNetMask[3]);
 	esp_netif_dhcpc_stop(netif_sta);
-	esp_netif_set_ip_info(netif_sta, &ip_info);
-	ESP_LOGI(TAG,"Set Ip: %d.%d.%d.%d\n",staticIpAddress[0], staticIpAddress[1], staticIpAddress[2], staticIpAddress[3]);
+	esp_netif_set_ip_info(netif_sta, &localNetwork);
+        ESP_LOGI(TAG, "Set ip:" IPSTR, IP2STR(localNetwork.ip));
 #endif
 
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
@@ -153,20 +219,16 @@ void networkStatus(void)
 	printf("got password %s\n", networkPass);
 	printf("got channel %d\n", wirelessChannel);
 	printf("got protocols %d\n", wirelessProtocols);
-	printf("got sta with ip %d.%d.%d.%d gw %d.%d.%d.%d netmask %d.%d.%d.%d baudrate %d\n",
-		staticIpAddress[0], staticIpAddress[1], staticIpAddress[2], staticIpAddress[3],
-		staticGateway[0], staticGateway[1], staticGateway[2], staticGateway[3],
-		staticNetMask[0], staticNetMask[1], staticNetMask[2], staticNetMask[3],
-		baudRate);
+        printf("got ip: " IPSTR "\n", IP2STR(&localNetwork.ip));
+        printf("got gw: " IPSTR "\n", IP2STR(&localNetwork.gw));
+        printf("got msk: " IPSTR "\n", IP2STR(&localNetwork.netmask));
+	printf("Baudrate: %d\n", baudRate);
 	printf( "MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 	// const ip_addr_t *dns = dns_getserver(0);
 	// const uint8_t *dns8 = (uint8_t*) dns;
 	// printf("DNS: %d.%d.%d.%d\n",dns8[0],dns8[1],dns8[2],dns8[3]);
 }
 
-
-char *tunnel= NULL;
-char *dnsserver = NULL;
 
 esp_err_t load_configuration(void) 
 {
@@ -192,8 +254,10 @@ esp_err_t load_configuration(void)
 		wirelessProtocols |= WIFI_PROTOCOL_11N;
 	if (strchr(tmp, 'l') != NULL)
 		wirelessProtocols |= WIFI_PROTOCOL_LR;
-	tunnel = getcfg("TUNNEL");
+	if ( !tunnel )
+	    tunnel = getcfg("TUNNEL");
 	printf("WIFI tunnel:  %s\n",tunnel ? tunnel : " -- ");
+        int staticIpAddress[4], staticGateway[4], staticNetMask[4]; // STA only
         if (tunnel && sscanf(tunnel, "sta %d.%d.%d.%d %d.%d.%d.%d %d.%d.%d.%d %d",
 			&staticIpAddress[0], &staticIpAddress[1], &staticIpAddress[2], &staticIpAddress[3],
 			&staticGateway[0], &staticGateway[1], &staticGateway[2], &staticGateway[3],

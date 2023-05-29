@@ -1,68 +1,105 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Buttons</title>
-</head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Button</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+
 <style>
-td {
-        background: #dddddd; 
-        frame:red;
-        text-align: center;
-        margin: auto;
-font-size: 40px;
-        
+.fram {
+    width:260px;
 }
-td.lft {
-        background: #dddddd; 
-        frame:red;
-        width: 40%;
-        Xtext-align: left;
-        #border: 4px solid green;
-
-
-}
-td.rgt {
-        background: #dddddd; 
-        width: 40%;
-        Xtext-align: right;
-        #border: 4px solid red;
-}
-.blinkgreen {
-  animation-name: greenflash;
-  animation-duration: 0.5s;
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 234px;
+  height: 38px;
 }
 
-@keyframes greenflash {
-  from {background-color: #dddddd;}
-  50%  {background-color: green;}
-  to {background-color: #dddddd;}
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
-.blinkred {
-  animation-name: redflash;
-  animation-duration: 0.5s;
+input:checked + .slider {
+  background-color: rgba(249, 112, 22, 0.92);
+
+}
+.XX {
+  background-color: black ;
+}
+.YY {
+  background-color: red ;
 }
 
-@keyframes redflash {
-  from {background-color: #dddddd;}
-  50%  {background-color: red;}
-  to {background-color: #dddddd;}
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
 }
+
+input:checked + .slider:before {
+  transform: translateX(200px);
+}
+
+
+
+.slider {
+  border-radius: 34px;
+ position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+  text-align: center;
+  margin: 2px
+}
+
+.slider:before {
+  border-radius: 50%;
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
 
 </style>
-<script>
 
-function dobtn(params)
-    {
+</head>
+<body>
+<div class="fram">
+<label class="switch"><input id="a" type="checkbox" onclick="myFunction()"  /><span class="slider">Button A</span></label>
+<label class="switch"><input id="b" type="checkbox" onclick="myFunction()"  /><span class="slider">Button B</span></label>
+<label class="switch"><input id="c" type="checkbox" onclick="myFunction()"  /><span class="slider">Button C</span></label>
+<label class="switch"><input id="d" type="checkbox" onclick="myFunction()"  /><span class="slider">Button D</span></label>
+<label class="switch"><input id="oa" type="checkbox" onclick="myFunction()"  /><span class="slider">Button OA</span></label>
+<label class="switch"><input id="ob" type="checkbox" onclick="myFunction()"  /><span class="slider">Button OB</span></label>
+<label class="switch"><input id="oc" type="checkbox" onclick="myFunction()"  /><span class="slider">Button OC</span></label>
+<label class="switch"><input id="od" type="checkbox" onclick="myFunction()"  /><span class="slider">Button OD</span></label>
+</div>
+<p id="res">--</p>
+
+
+</form>
+
+<script>
+function myFunction() {
     var url = "/send";
-    if ( params.match(".off") ) 
-    {
-	cl="blinkred";
-    } else {
-	cl="blinkgreen"
-    }
+
+
+  var t = event.target;
+  var params=t.id + "." + (t.checked ? "on" : "off");
+
     var xhr = new XMLHttpRequest();
-    var el = event.target.parentElement;
 
     xhr.responseType = "text";
     xhr.onload = () => 
@@ -71,7 +108,7 @@ function dobtn(params)
 	{
 	    if (xhr.status === 200 && xhr.responseText == "OK" ) 
 	    {
-		el.setAttribute("class",cl);
+		    console.log(t.checked);
 	    }
 	}
     };
@@ -79,47 +116,11 @@ function dobtn(params)
     xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     xhr.send("buttons/" + params);
 }
-function strt() {
-    var url = "/buttons";
-    var xhr = new XMLHttpRequest();
-    xhr.responseType = "text";
-    xhr.onload = () => 
-    {
-	if (xhr.readyState === xhr.DONE && xhr.status === 200 ) 
-	{
-		//TODO: make buttons dynamic...
-	    document.getElementById("demo").innerHTML += xhr.responseText;
-	    xhr.responseText.split("\n").forEach.sort()( function(i) { 
-		if ( i.length != 0 )
-			console.log("T:"+ i)
-		})
-	}
-    };
-
-    xhr.open("GET", url, true);
-    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    xhr.send("");
-}
-strt();
-
 </script>
-<body>
-
-<h1>Button Switch</h1>
-<p id="demo">----</p>
-
-<table id="tab" width="100%">
-<tr><td class="lft"><p onmousedown="dobtn('a.on')">&#x2705;</p></td><td>A</td><td class="rgt" ><p onmousedown="dobtn('a.off')" >&#x274C </p></td></tr>
-<tr><td class="lft"><p onmousedown="dobtn('b.on')">&#x2705;</p></td><td>B</td><td class="rgt" ><p onmousedown="dobtn('b.off')" >&#x274C </p></td></tr>
-<tr><td class="lft"><p onmousedown="dobtn('c.on')">&#x2705;</p></td><td>C</td><td class="rgt" ><p onmousedown="dobtn('c.off')"  >&#x274C </p></td></tr>
-<tr><td class="lft"><p onmousedown="dobtn('d.on')">&#x2705;</p></td><td>D</td><td class="rgt" ><p onmousedown="dobtn('d.off')" >&#x274C </p></td></tr>
-<tr><td class="lft"><p onmousedown="dobtn('oa.on')">&#x2705;</p></td><td>OA</td><td class="rgt" ><p onmousedown="dobtn('oa.off')" >&#x274C </p></td></tr>
-<tr><td class="lft"><p onmousedown="dobtn('ob.on')">&#x2705;</p></td><td>OB</td><td class="rgt" ><p onmousedown="dobtn('ob.off')" >&#x274C </p></td></tr>
-<tr><td class="lft"><p onmousedown="dobtn('oc.on')">&#x2705;</p></td><td>OC</td><td class="rgt" ><p onmousedown="dobtn('oc.off')"  >&#x274C </p></td></tr>
-<tr><td class="lft"><p onmousedown="dobtn('od.on')">&#x2705;</p></td><td>OD</td><td class="rgt" ><p onmousedown="dobtn('od.off')" >&#x274C </p></td></tr>
-
-</table>
 
 </body>
+
+
 </html>
+
 

@@ -57,9 +57,11 @@ void resetBeaglebone(void *p)
     io_conf.pull_down_en = 0;
     io_conf.pull_up_en = 1;
     gpio_config(&io_conf);
-    gpio_set_level(CONFIG_GPIO_RESET_PIN, 1);
-    vTaskDelay(pdMS_TO_TICKS(1000));
     gpio_set_level(CONFIG_GPIO_RESET_PIN, 0);
+    vTaskDelay(pdMS_TO_TICKS(100));
+    gpio_set_level(CONFIG_GPIO_RESET_PIN, 1);
+    gpio_set_direction(CONFIG_GPIO_RESET_PIN, GPIO_MODE_INPUT); // gpio_num_t gpio_num, gpio_mode_t mode)
+    vTaskDelay(pdMS_TO_TICKS(100));
     vTaskDelete(NULL);
 }
 
@@ -90,12 +92,28 @@ static char *http_auth_basic(const char *username, const char *password)
     return digest;
 }
 
+#if 0
+static esp_err_t is_authenticated(httpd_req_t *req)
+{
+    esp_err_t rv = ESP_FAIL;
+    char *buf = NULL;
+    size_t buf_len = 0;
+
+
+}
+#endif
+
 /* An HTTP GET handler */
 static esp_err_t httpdAuthGetHandler(httpd_req_t *req)
 {
     char *buf = NULL;
     size_t buf_len = 0;
-    basic_auth_info_t *basic_auth_info = req->user_ctx;
+    basic_auth_info_t basic_auth_info = {
+	.username = getcfg("AUTHUSER"),
+	.password = getcfg("AUTHPASS")
+    };
+
+
 
     buf_len = httpd_req_get_hdr_value_len(req, "Authorization") + 1;
     if (buf_len > 1) {
@@ -111,7 +129,7 @@ static esp_err_t httpdAuthGetHandler(httpd_req_t *req)
             ESP_LOGE(TAG, "No auth value received");
         }
 
-        char *auth_credentials = http_auth_basic(basic_auth_info->username, basic_auth_info->password);
+        char *auth_credentials = http_auth_basic(basic_auth_info.username, basic_auth_info.password);
         if (!auth_credentials) {
             ESP_LOGE(TAG, "No enough memory for basic authorization credentials");
             free(buf);
@@ -131,7 +149,7 @@ static esp_err_t httpdAuthGetHandler(httpd_req_t *req)
             httpd_resp_set_status(req, HTTPD_200);
             httpd_resp_set_type(req, "application/json");
             httpd_resp_set_hdr(req, "Connection", "keep-alive");
-            asprintf(&basic_auth_resp, "{\"authenticated\": true,\"user\": \"%s\"}", basic_auth_info->username);
+            asprintf(&basic_auth_resp, "{\"authenticated\": true,\"user\": \"%s\"}", basic_auth_info.username);
             if (!basic_auth_resp) {
                 ESP_LOGE(TAG, "No enough memory for basic authorization response");
                 free(auth_credentials);
@@ -170,6 +188,7 @@ static httpd_uri_t basic_auth = {
 };
 
 
+#if 0
 static void httpdRegisterBasicAuth(httpd_handle_t server)
 {
     basic_auth_info_t *basic_auth_info = calloc(1, sizeof(basic_auth_info_t));
@@ -181,6 +200,7 @@ static void httpdRegisterBasicAuth(httpd_handle_t server)
         httpd_register_uri_handler(server, &basic_auth);
     }
 }
+#endif
 #endif
 
 #define IS_FILE_EXT(filename, ext) \
@@ -405,6 +425,11 @@ static esp_err_t httpdRf433PostHandler(httpd_req_t *req)
 		ESP_LOGI(TAG,"Creating test.html");
 		fhd = fopen("/data/public/test.html","w");
         }
+	const char msg[]="#SystemConfiguration";
+        if (fhd == NULL  && strncmp(buf,msg,sizeof(msg)-1) == 0 ) {
+		ESP_LOGI(TAG,"Creating system.cfg");
+		fhd = fopen("/data/system.cfg","w");
+        }
         if (fhd != NULL ) {
 		ESP_LOGI(TAG,"Saving.. %d\n",ret);
 		fwrite(buf,1,ret,fhd);
@@ -415,6 +440,7 @@ static esp_err_t httpdRf433PostHandler(httpd_req_t *req)
 		
 
         /* Log data received */
+	buf[ret]=0;
         ESP_LOGI(TAG, "=========== RECEIVED DATA ==========");
         ESP_LOGI(TAG, "%.*s", ret, buf);
         ESP_LOGI(TAG, "==============%d of %d======================",remaining,ret);
@@ -484,15 +510,13 @@ static httpd_handle_t httpdStartServer(void)
         ESP_LOGI(TAG, "Registering URI handlers");
 #if CONFIG_BASIC_AUTH
 	// need to register before wildcard...
-	httpdRegisterBasicAuth(server);
+	// httpdRegisterBasicAuth(server);
 #endif
 	httpd_uri_t uris[] = {
+	    { .uri       = "/basic_auth", .method    = HTTP_GET, .handler   = httpdAuthGetHandler,  .user_ctx = NULL  },
 	    { .uri       = "/send",       .method    = HTTP_POST, .handler   = httpdRf433PostHandler,  .user_ctx  = NULL },
 	    { .uri       = "/buttons",    .method    = HTTP_GET,  .handler   = httpdButtonsGetHandler, .user_ctx  = NULL },
 	    { .uri       = "/*",           .method    = HTTP_GET,  .handler   = hello_get_handler,   .user_ctx  = server_data },
-#if 0 //  CONFIG_BASIC_AUTH
-	    { .uri       = "/basic_auth", .method    = HTTP_GET, .handler   = httpdAuthGetHandler, }
-#endif
 	};
 	for(const httpd_uri_t *up=uris;up<(uris+sizeof(uris)/sizeof(uris[0]));up++){
 	    httpd_register_uri_handler(server, up);

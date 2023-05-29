@@ -42,7 +42,7 @@ wifiTunnel(void *)
 {
 	uartTunInitHw(115200);
 	//set baudrate for config
-		myPrintf("\n\nready to receive configuration\n\n");
+	myPrintf("\n\nready to receive configuration\n\n");
 	printf("\n\nready to receive configuration\n\n");
 
 
@@ -74,10 +74,19 @@ wifiTunnel(void *)
 		wifiTunTxTask(NULL);
 }
 
+#define CFG_IS(v)  "Config: " # v ": %s\n", (v ? "Enabled" : "No")
+void osStatus(void)
+{
+    printf("OS: %s\n",GIT_INFO);
+    printf( CFG_IS(CONFIG_WIFI_TUNNEL) );
+    printf( CFG_IS(CONFIG_UARTIF_ENABLED) );
+    printf( CFG_IS(CONFIG_SPIO_ENABLED) );
+}
 
 static int 
 cmd_tunnelStatus(int argc, char **argv)
 {
+	osStatus();
 	networkStatus();
 #if CONFIG_SPIO_ENABLED
 	spiStatus();

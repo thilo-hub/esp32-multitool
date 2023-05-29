@@ -44,18 +44,25 @@ static void uartConRxTask(void *p)
 	const int sock = (int) p;
 	int len=1;
 	int written=1;
-	printf("Starting U-RX\n");
-	uart_write_bytes(CONFIG_UARTCON_UART, "Starting\n",9);
-	while (len>0) {
+	ESP_LOGI(TAG, "Uart RX starting");
+	send(sock,"Connected\n",10,0);
+	while (1) {
 	    uint8_t buffer[256]; // bigger than MTU
 	    len = uart_read_bytes(CONFIG_UARTCON_UART, buffer, 1, portMAX_DELAY);
 	    if ( len > 0 ) {
-		len += uart_read_bytes(CONFIG_UARTCON_UART, buffer+1, sizeof(buffer)-2, 0); // Maybe - get remaining....
-		buffer[len]=0;
+		size_t len2=0;
+		uart_get_buffered_data_len(CONFIG_UARTCON_UART,&len2);
+		if ( len2 > 0 ) {
+		    if ( len2 > sizeof(buffer)-1 )
+			len2 = sizeof(buffer)-1;
+		    len += uart_read_bytes(CONFIG_UARTCON_UART, buffer+1, len2, 0); // Maybe - get remaining....
+		}
 		written = send(sock, buffer,len,0);
 		if (written < 0) {
 		    ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
 		    // Failed to retransmit, giving up
+		    shutdown(sock, 0);
+		    close(sock);
 		    vTaskDelete(NULL);
 		    return;
 		} else {
@@ -65,27 +72,29 @@ static void uartConRxTask(void *p)
 	}
 }
 
-
-static void doRetransmit(const int sock)
+static void doUartConsole(const int sock)
 {
-    int len;
-    char rx_buffer[128];
     TaskHandle_t  rxTask = NULL;
-    xTaskCreate(uartConRxTask, "uart_rx", 2048, (void *)sock, tskIDLE_PRIORITY + 2, &rxTask);
+
+
+    xTaskCreate(uartConRxTask, "uart_rx", 4096, (void *)sock, tskIDLE_PRIORITY, &rxTask);
+    int len;
+    char rx_buffer[1500];
+    ESP_LOGI(TAG, "Uart TX starting");
     do {
         len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
         if (len < 0) {
             ESP_LOGE(TAG, "Error occurred during receiving: errno %d", errno);
+	    break;
         } else if (len == 0) {
             ESP_LOGW(TAG, "Connection closed");
+	    break;
         } else {
-            rx_buffer[len] = 0; // Null-terminate whatever is received and treat it like a string
             // ESP_LOGI(TAG, "Received %d bytes: %s", len, rx_buffer);
 	    uart_write_bytes(CONFIG_UARTCON_UART, rx_buffer,len);
         }
-    } while (len > 0);
-    if ( rxTask != NULL )	
-	vTaskDelete(rxTask);
+    } while(1);
+    vTaskDelete(rxTask);
 }
 
 
@@ -180,7 +189,7 @@ static void httpdTcpServerTask(void *pvParameters)
 #endif
         ESP_LOGI(TAG, "Socket accepted ip address: %s", addr_str);
 
-        doRetransmit(sock);
+        doUartConsole(sock);
 
         shutdown(sock, 0);
         close(sock);
@@ -191,16 +200,24 @@ CLEAN_UP:
     vTaskDelete(NULL);
 }
 
+void dmp_frames(int start);
 int uartConStart(int argc, char **argv)
 {
-    	static TaskHandle_t  tcpServer = NULL;
-	if ( tcpServer == NULL ) {
-	    uartConInitHw(115200);  //TODO: make this part of the url
+    static TaskHandle_t srvr = NULL;
+#if 1
+	if (argc == 2 ) {
+	    dmp_frames(strcmp(argv[1],"start") == 0);
+	}
+#endif
+	if (srvr != NULL )
+	    vTaskDelete(srvr);
+	if (1) {
 	    int baudRate=115200;
-	    ESP_ERROR_CHECK( uart_wait_tx_done(CONFIG_UARTCON_UART, portMAX_DELAY) );
-	    ESP_ERROR_CHECK( uart_set_baudrate(CONFIG_UARTCON_UART, baudRate));
+	    uartConInitHw(baudRate);  //TODO: make this part of the url
+	    // ESP_ERROR_CHECK( uart_wait_tx_done(CONFIG_UARTCON_UART, portMAX_DELAY) );
+	    // ESP_ERROR_CHECK( uart_set_baudrate(CONFIG_UARTCON_UART, baudRate));
 
-	    xTaskCreate(httpdTcpServerTask, "tcp_server", 4096, (void*)AF_INET, 5, &tcpServer);
+	    xTaskCreate(httpdTcpServerTask, "tcp_server", 4096, (void*)AF_INET, 2, &srvr);
 	}
 	return 0;
 }
