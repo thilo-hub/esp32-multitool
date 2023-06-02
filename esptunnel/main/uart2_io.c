@@ -201,6 +201,7 @@ CLEAN_UP:
 }
 
 void dmp_frames(int start);
+
 int uartConStart(int argc, char **argv)
 {
     static TaskHandle_t srvr = NULL;
@@ -212,8 +213,6 @@ int uartConStart(int argc, char **argv)
 	if (srvr != NULL )
 	    vTaskDelete(srvr);
 	if (1) {
-	    int baudRate=115200;
-	    uartConInitHw(baudRate);  //TODO: make this part of the url
 	    // ESP_ERROR_CHECK( uart_wait_tx_done(CONFIG_UARTCON_UART, portMAX_DELAY) );
 	    // ESP_ERROR_CHECK( uart_set_baudrate(CONFIG_UARTCON_UART, baudRate));
 
@@ -225,7 +224,8 @@ int uartConStart(int argc, char **argv)
 void registerUartCon(void)
 {
     
-
+    int baudRate=115200;
+    uartConInitHw(baudRate);  //TODO: make this part of the url
     const esp_console_cmd_t cmd[] = {
     {
         .command = "uart",
