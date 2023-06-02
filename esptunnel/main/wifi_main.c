@@ -159,7 +159,7 @@ void initializeWifi(void)
 
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	const char *hn=getCfg("HOSTNAME");
+	char *hn=getCfg("HOSTNAME");
 	if ( hn ){
 	    esp_netif_set_hostname(netif_sta,hn);
 	    ESP_LOGI(TAG,"Hostname: %s",hn);
@@ -228,7 +228,7 @@ void networkStatus(void)
         printf("got msk: " IPSTR "\n", IP2STR(&localNetwork.netmask));
 	printf("Baudrate: %d\n", baudRate);
 	printf( "MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
-	char *hn=NULL;
+	const char *hn=NULL;
 	esp_netif_get_hostname(netif_sta,&hn);
 	printf("Hostname: %s\n",hn ? hn : "--");
 	// esp_netif_t *esp_netif, const char **hostname)
