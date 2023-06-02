@@ -81,6 +81,7 @@ void osStatus(void)
     printf( CFG_IS(CONFIG_WIFI_TUNNEL) );
     printf( CFG_IS(CONFIG_UARTIF_ENABLED) );
     printf( CFG_IS(CONFIG_SPIO_ENABLED) );
+    printf( "Reset-pin: %d\n",CONFIG_GPIO_RESET_PIN);
 }
 
 static int 
