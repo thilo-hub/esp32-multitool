@@ -159,9 +159,13 @@ void initializeWifi(void)
 
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	const char *hn=getcfg("HOSTNAME");
-	if ( hn )
+	const char *hn=getCfg("HOSTNAME");
+	if ( hn ){
 	    esp_netif_set_hostname(netif_sta,hn);
+	    ESP_LOGI(TAG,"Hostname: %s",hn);
+	    free(hn);
+	}
+
 
 
 	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, tstEvent, NULL));
@@ -224,6 +228,10 @@ void networkStatus(void)
         printf("got msk: " IPSTR "\n", IP2STR(&localNetwork.netmask));
 	printf("Baudrate: %d\n", baudRate);
 	printf( "MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+	char *hn=NULL;
+	esp_netif_get_hostname(netif_sta,&hn);
+	printf("Hostname: %s\n",hn ? hn : "--");
+	// esp_netif_t *esp_netif, const char **hostname)
 	// const ip_addr_t *dns = dns_getserver(0);
 	// const uint8_t *dns8 = (uint8_t*) dns;
 	// printf("DNS: %d.%d.%d.%d\n",dns8[0],dns8[1],dns8[2],dns8[3]);
@@ -233,29 +241,34 @@ void networkStatus(void)
 esp_err_t load_configuration(void) 
 {
 
-#define Xstrcpy(a,b) do { char *p=b; if (b) { strcpy(a,p); } } while(0)
-	Xstrcpy(networkName ,getcfg("SSID"));
+#define Xstrcpy(a,b) do { char *p=b; if (b) { strcpy(a,p); free(b); } } while(0)
+	Xstrcpy(networkName ,getCfg("SSID"));
         printf("WIFI config:  %s\n",networkName);
 	char *p;
 	if ( (p=strchr(networkName,' ')) != 0 )
 	    *p=0;
-	Xstrcpy( networkPass , getcfg("PW") );
+	Xstrcpy( networkPass , getCfg("PW") );
 	if ( (p=strchr(networkPass,' ')) != 0 )
 	    *p=0;
         printf("WIFI PW:  %s\n",networkPass);
-	char *tmp = getcfg("PROTO");
+	char *tmp = getCfg("PROTO");
 	printf("WIFI proto:  %s\n",tmp ? tmp : " -- ");
 	wirelessProtocols = 0;
-	if (strchr(tmp, 'b') != NULL)
-		wirelessProtocols |= WIFI_PROTOCOL_11B;
-	if (strchr(tmp, 'g') != NULL)
-		wirelessProtocols |= WIFI_PROTOCOL_11G;
-	if (strchr(tmp, 'n') != NULL)
-		wirelessProtocols |= WIFI_PROTOCOL_11N;
-	if (strchr(tmp, 'l') != NULL)
-		wirelessProtocols |= WIFI_PROTOCOL_LR;
+	if ( tmp ) {
+	    if (strchr(tmp, 'b') != NULL)
+		    wirelessProtocols |= WIFI_PROTOCOL_11B;
+	    if (strchr(tmp, 'g') != NULL)
+		    wirelessProtocols |= WIFI_PROTOCOL_11G;
+	    if (strchr(tmp, 'n') != NULL)
+		    wirelessProtocols |= WIFI_PROTOCOL_11N;
+	    if (strchr(tmp, 'l') != NULL)
+		    wirelessProtocols |= WIFI_PROTOCOL_LR;
+	    free(tmp);
+	    tmp = NULL;
+	}
+
 	if ( !tunnel )
-	    tunnel = getcfg("TUNNEL");
+	    tunnel = getCfg("TUNNEL");
 	printf("WIFI tunnel:  %s\n",tunnel ? tunnel : " -- ");
         int staticIpAddress[4], staticGateway[4], staticNetMask[4]; // STA only
         if (tunnel && sscanf(tunnel, "sta %d.%d.%d.%d %d.%d.%d.%d %d.%d.%d.%d %d",
@@ -266,7 +279,7 @@ esp_err_t load_configuration(void)
 	    wirelessInterface = WIFI_IF_STA;
 	}
 
-	dnsserver = getcfg("DNSSERVER");
+	dnsserver = getCfg("DNSSERVER");
 	printf("DNS: %s\n",dnsserver ? dnsserver : " --- ");
 	if ( wirelessInterface < 0  || (wirelessProtocols == 0) )
 	    return ESP_FAIL;
@@ -276,11 +289,10 @@ esp_err_t load_configuration(void)
 // TODO:  make fail safe...
 void tunnelWaitForPeer(void)
 {
-    char *nw = getcfg("SSID");
+    char *nw = getCfg("SSID");
     int peerAnswered=0;
     while ( !peerAnswered ) 
     {
-	myPrintf("%s\n",GIT_INFO);
 	if ( dnsserver )
 	    myPrintf("DNS: %s\n",dnsserver);
 	myPrintf("WIFI config:  %s\n",nw ? nw : " -- NULL --");
@@ -290,10 +302,13 @@ void tunnelWaitForPeer(void)
 	printf("input line: %s\n", line);
 	if (strstr(line,"Start")  != NULL ) {
 	    peerAnswered=1;
+	    myPrintf("\n%s",GIT_INFO);
 	    printf("Go\n");
 	    myPrintf("Starting Wifi\n");
 	}
     }
+    if(nw)
+	free(nw);
 }
 
 int cmdWifiStart(int argc,char **argv)

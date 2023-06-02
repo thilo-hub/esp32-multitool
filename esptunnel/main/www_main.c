@@ -117,10 +117,9 @@ static esp_err_t httpdAuthGetHandler(httpd_req_t *req)
     char *buf = NULL;
     size_t buf_len = 0;
     basic_auth_info_t basic_auth_info = {
-	.username = getcfg("AUTHUSER"),
-	.password = getcfg("AUTHPASS")
+	.username = getCfg("AUTHUSER"),
+	.password = getCfg("AUTHPASS")
     };
-
 
 
     buf_len = httpd_req_get_hdr_value_len(req, "Authorization") + 1;
@@ -141,6 +140,10 @@ static esp_err_t httpdAuthGetHandler(httpd_req_t *req)
         if (!auth_credentials) {
             ESP_LOGE(TAG, "No enough memory for basic authorization credentials");
             free(buf);
+	    if (basic_auth_info.password)
+		free(basic_auth_info.password);
+	    if (basic_auth_info.username)
+		free(basic_auth_info.username);
             return ESP_ERR_NO_MEM;
         }
 
@@ -162,6 +165,10 @@ static esp_err_t httpdAuthGetHandler(httpd_req_t *req)
                 ESP_LOGE(TAG, "No enough memory for basic authorization response");
                 free(auth_credentials);
                 free(buf);
+		if (basic_auth_info.password)
+		    free(basic_auth_info.password);
+		if (basic_auth_info.username)
+		    free(basic_auth_info.username);
                 return ESP_ERR_NO_MEM;
             }
             httpd_resp_send(req, basic_auth_resp, strlen(basic_auth_resp));
@@ -186,14 +193,12 @@ static esp_err_t httpdAuthGetHandler(httpd_req_t *req)
         httpd_resp_send(req, NULL, 0);
     }
 
+    if (basic_auth_info.password)
+	free(basic_auth_info.password);
+    if (basic_auth_info.username)
+	free(basic_auth_info.username);
     return ESP_OK;
 }
-
-static httpd_uri_t basic_auth = {
-    .uri       = "/basic_auth",
-    .method    = HTTP_GET,
-    .handler   = httpdAuthGetHandler,
-};
 
 
 #if 0
@@ -594,6 +599,7 @@ return 0;
 #include "esp_console.h"
 void registerHttpdServer(void)
 {
+    setup_hw();
     const esp_console_cmd_t cmd[] = {
     {
         .command = "www",
@@ -606,11 +612,13 @@ void registerHttpdServer(void)
 	    ESP_ERROR_CHECK( esp_console_cmd_register(cmd+i) );
     }
 #if CONFIG_WEBSERVER_AUTOSTART
-    char *ssid = getcfg("SSID");
-    char *password   = getcfg("PW");
+    char *ssid = getCfg("SSID");
+    char *password   = getCfg("PW");
     if ( ssid && password ) {
 	cmdHttpdStartServer(0,NULL);
     }
+    if(ssid) free(ssid);
+    if(password) free(password);
 #endif
 }
 #endif
