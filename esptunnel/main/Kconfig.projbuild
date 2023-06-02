@@ -148,7 +148,12 @@ menu "Webserver Configuration"
     config GPIO_RESET_PIN
         depends on BASIC_AUTH
 	int "Gpio to toggle to reset Beaglebone"
-	default 9
+	default 38
+	help
+	    GPIO pin connected to BeagleBone reset. Watchout, some GPIO's (<24 I think) emit spikes/glitches during
+	    reboot. This can cause unwanted results.
+	    Consult the ESP32* documentations which pin's are OK.
+	    the default works on esp32-S3
     config BASIC_AUTH
         bool "Basic Authentication"
         default y
