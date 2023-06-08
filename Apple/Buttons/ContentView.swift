@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-//import MultipeerConnectivitimport Collections
 import Collections
 
 let ServerURL = URL(string: "http://beaglebone1.nispuk.com")!;
