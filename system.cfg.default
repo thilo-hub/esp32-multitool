@@ -4,4 +4,6 @@ AUTHUSER=Beaglebone
 AUTHPASS=Beagle1
 PROTO=bgn 
 TUNNEL=sta 10.1.1.73 10.1.1.9 255.255.255.0 3500000
+HOSTNAME=beaglebone1
+DNSSERVER=1.1.1.1 nispuk.com
 
