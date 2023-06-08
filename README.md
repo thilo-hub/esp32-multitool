@@ -25,10 +25,10 @@ I use a "hand-wire-wrapped" bread board on the beaglebone (picture). Essentially
 
 
 # Status
+ - unified single esp32-s3 image that supports (web-server, wifi-connection, rf433 sender)
+ - MacOS/IOS excutable that drives the rf433 interface
+ - WebServer that drives ( reset-button, beagle-console, rf433 sender)
 
- - spi/uart tunnel working as a separate esp image
-
- - rf433/reset/uart working as a separate esp image
  - Capturing of rf433 signals using command line interface and small tools on a PC
 
 # Content
