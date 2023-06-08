@@ -14,6 +14,7 @@
 		B66B74432A2B810E00323409 /* ButtonsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B66B74422A2B810E00323409 /* ButtonsTests.swift */; };
 		B66B744D2A2B810E00323409 /* ButtonsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B66B744C2A2B810E00323409 /* ButtonsUITests.swift */; };
 		B66B744F2A2B810E00323409 /* ButtonsUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B66B744E2A2B810E00323409 /* ButtonsUITestsLaunchTests.swift */; };
+		B6761CED2A2BD59700FE5945 /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = B6761CEC2A2BD59700FE5945 /* Collections */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +46,7 @@
 		B66B74482A2B810E00323409 /* ButtonsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ButtonsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B66B744C2A2B810E00323409 /* ButtonsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonsUITests.swift; sourceTree = "<group>"; };
 		B66B744E2A2B810E00323409 /* ButtonsUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonsUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		B6761CEE2A2BD5EA00FE5945 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +54,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B6761CED2A2BD59700FE5945 /* Collections in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,6 +98,7 @@
 		B66B742F2A2B810D00323409 /* Buttons */ = {
 			isa = PBXGroup;
 			children = (
+				B6761CEE2A2BD5EA00FE5945 /* Info.plist */,
 				B66B74302A2B810D00323409 /* ButtonsApp.swift */,
 				B66B74322A2B810D00323409 /* ContentView.swift */,
 				B66B74342A2B810E00323409 /* Assets.xcassets */,
@@ -145,6 +149,9 @@
 			dependencies = (
 			);
 			name = Buttons;
+			packageProductDependencies = (
+				B6761CEC2A2BD59700FE5945 /* Collections */,
+			);
 			productName = Buttons;
 			productReference = B66B742D2A2B810D00323409 /* Buttons.app */;
 			productType = "com.apple.product-type.application";
@@ -217,6 +224,9 @@
 				Base,
 			);
 			mainGroup = B66B74242A2B810D00323409;
+			packageReferences = (
+				B6761CEB2A2BD59700FE5945 /* XCRemoteSwiftPackageReference "swift-collections" */,
+			);
 			productRefGroup = B66B742E2A2B810D00323409 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -419,6 +429,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Buttons/Info.plist;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -429,7 +440,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.3;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
@@ -457,6 +468,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Buttons/Info.plist;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -467,7 +479,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.3;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
@@ -612,6 +624,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B6761CEB2A2BD59700FE5945 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B6761CEC2A2BD59700FE5945 /* Collections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B6761CEB2A2BD59700FE5945 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = Collections;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B66B74252A2B810D00323409 /* Project object */;
 }
