@@ -96,6 +96,12 @@ cmd_tunnelStatus(int argc, char **argv)
 	return 0;
 }
 #include "esp_console.h"
+static int load_defaults(int argc,char **argv)
+{
+    int  importDefaultCfg(void);
+    return importDefaultCfg();
+}
+
 void registerWifitun(void)
 {
 	const esp_console_cmd_t cmd[] = {
@@ -104,6 +110,13 @@ void registerWifitun(void)
 			.help = "Tunnel status",
 			.hint = NULL,
 			.func = &cmd_tunnelStatus,
+			.argtable = NULL,
+		},
+		{
+			.command = "load_defaults",
+			.help = "Load default configuration",
+			.hint = NULL,
+			.func = &load_defaults,
 			.argtable = NULL,
 		}
 	};
