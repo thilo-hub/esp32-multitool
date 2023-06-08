@@ -382,7 +382,7 @@ static esp_err_t hello_get_handler(httpd_req_t *req)
     /* Close file after sending complete */
     fclose(fd);
     ESP_LOGI(TAG, "File sending complete");
-    httpd_resp_send_chunk(req, "OK", HTTPD_RESP_USE_STRLEN);
+    //httpd_resp_send_chunk(req, "OK", HTTPD_RESP_USE_STRLEN);
 
     /* Respond with an empty chunk to signal HTTP response completion */
 // #ifdef CONFIG_EXAMPLE_HTTPD_CONN_CLOSE_HEADER
