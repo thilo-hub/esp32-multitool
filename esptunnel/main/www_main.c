@@ -434,6 +434,12 @@ static esp_err_t httpdRf433PostHandler(httpd_req_t *req)
 
         /* Send back the same data */
         remaining -= ret;
+
+	// Some "special" cases hardwired... not certain about the security implications...
+        if (fhd == NULL  && buf[0]=='{' ) { 
+		ESP_LOGI(TAG,"Creating buttons.json");
+		fhd = fopen("/data/public/buttons.json","w");
+        }
 #ifdef DEBUG_UPLOAD
         if (fhd == NULL  && strncmp(buf,"<!DOCTYPE html>",15) == 0 ) {
 		ESP_LOGI(TAG,"Creating test.html");
@@ -444,12 +450,12 @@ static esp_err_t httpdRf433PostHandler(httpd_req_t *req)
 		ESP_LOGI(TAG,"Creating system.cfg");
 		fhd = fopen("/data/system.cfg","w");
         }
+#endif
         if (fhd != NULL ) {
 		ESP_LOGI(TAG,"Saving.. %d\n",ret);
 		fwrite(buf,1,ret,fhd);
 		continue;
 	}
-#endif
 		
 		
 

@@ -34,7 +34,7 @@ td {
   color: white;
   font-size: 20px;
 }
-button.depth {
+button.on {
     background: #444;
     border: none;
     border-radius: 80px;
@@ -62,7 +62,7 @@ button.depth {
                  0 -1px 1px hsla(0,0%,0%,.75);
     width: 80px;
 }
-button.depth1 {
+button.off {
     background: #444;
     border: none;
     border-radius: 80px;
@@ -90,21 +90,21 @@ button.depth1 {
                  0 -1px 1px hsla(0,0%,0%,.75);
     width: 80px;
 }
-button.depth1:hover, buttono.depth1:focus {
+button.off:hover, buttono.off:focus {
     
     color: #bb0063;
     text-shadow: 0 0 20px hsla(240,75%,75%,.5),
                  0 1px 1px hsla(0,0%,100%,.25),
                  0 -1px 1px hsla(0,0%,0%,.75);
 }
-button.depth:hover,
-button.depth:focus {
+button.on:hover,
+button.on:focus {
     color: #0ab;
     text-shadow: 0 0 20px hsla(240,75%,75%,.5),
                  0 1px 1px hsla(0,0%,100%,.25),
                  0 -1px 1px hsla(0,0%,0%,.75);
 }
-button.depth:active {
+button.on:active {
     color: #bb0063;
     box-shadow: inset 0 0 2px 2px hsla(0,0%,0%,.2),
                 inset 0 0 2px 4px hsla(0,0%,0%,.2),
@@ -125,7 +125,7 @@ button.depth:active {
                 0 -1px 2px 8px hsla(0,0%,0%,.5);
     line-height: 86px;
 }
-button.depth1:active {
+button.off:active {
     color: #0ab;
     box-shadow: inset 0 0 2px 2px hsla(0,0%,0%,.2),
                 inset 0 0 2px 4px hsla(0,0%,0%,.2),
@@ -151,11 +151,6 @@ button.depth1:active {
 <script>
 function press(btn) {
     var url = "/send";
-
-
-  var t = event.target;
-  var params=btn; // t.id + "." + (t.checked ? "on" : "off");
-
     var xhr = new XMLHttpRequest();
 
     xhr.responseType = "text";
@@ -163,29 +158,60 @@ function press(btn) {
     {
 	if (xhr.readyState === xhr.DONE) 
 	{
-	    if (xhr.status === 200 && xhr.responseText == "OK" ) 
+	    if (xhr.status === 200)
 	    {
-		    console.log(t.checked);
+		// Should do something if an error comes back?
+		    console.log(xhr.responseText);
 	    }
 	}
     };
     xhr.open("POST", url, true);
     xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    xhr.send("buttons/" + params);
+    xhr.send("buttons/" + btn.currentTarget.myParam);
 }
-</script>
-<table>
-<tr><td> <button onClick="press('a.on')" class="depth" type="button">&#10004;</button> </td><td>LAMPE </td><td> <button onClick="press('a.off')" class="depth1" type="button">&#10006;</button> </td></tr>
-<tr><td> <button onClick="press('b.on')" class="depth" type="button">&#10004;</button> </td><td>Button B </td><td> <button onClick="press('b.off')" class="depth1" type="button">&#10006;</button> </td></tr>
-<tr><td> <button onClick="press('c.on')" class="depth" type="button">&#10004;</button> </td><td>Button C </td><td> <button onClick="press('c.off')" class="depth1" type="button">&#10006;</button> </td></tr>
-<tr><td> <button onClick="press('d.on')" class="depth" type="button">&#10004;</button> </td><td>Thilo </td><td> <button onClick="press('d.off')" class="depth1" type="button">&#10006;</button> </td></tr>
-<tr><td> <button onClick="press('oa.on')" class="depth" type="button">&#10004;</button> </td><td>Button oA </td><td> <button onClick="press('oa.off')" class="depth1" type="button">&#10006;</button> </td></tr>
-<tr><td> <button onClick="press('ob.on')" class="depth" type="button">&#10004;</button> </td><td>Button oB </td><td> <button onClick="press('ob.off')" class="depth1" type="button">&#10006;</button> </td></tr>
-<tr><td> <button onClick="press('oc.on')" class="depth" type="button">&#10004;</button> </td><td>Button oC </td><td> <button onClick="press('oc.off')" class="depth1" type="button">&#10006;</button> </td></tr>
-<tr><td> <button onClick="press('od.on')" class="depth" type="button">&#10004;</button> </td><td>Button oD </td><td> <button onClick="press('od.off')" class="depth1" type="button">&#10006;</button> </td></tr>
 
-  
+function setupButtonList(url) {
+    var xhr = new XMLHttpRequest();
+    xhr.responseType = "json";
+    xhr.onload = () => 
+    {
+	if (xhr.readyState === xhr.DONE && xhr.status === 200) 
+	{
+	    const template = document.querySelector('#buttonrow');
+	    const tbody = document.querySelector("tbody");
+	    const buttons = xhr.response;
+	    // Add rows for the buttons
+	    for(button in buttons) {
+		const clone = template.content.firstElementChild.cloneNode(true);
+		let td = clone.querySelectorAll("td");
+		td[1].textContent = buttons[button];
+		td[0].addEventListener("click",press);
+		td[0].myParam = button+".on";
+		td[2].addEventListener("click", press);
+		td[2].myParam = button+".off";
+		tbody.appendChild(clone);
+	    }
+	}
+    };
+    xhr.open("GET", url, true);
+    xhr.send(null);
+}
+
+// get initial button list
+setupButtonList("/buttons.json");
+</script>
+
+<table id="buttons" >
+<tbody> </tbody>
 </table>
+<template id="buttonrow">
+    <tr>
+    	<td> <button class="on" type="button">&#10004;</button> </td>
+	<td>ButtonLabelSimpleText</td>
+	<td> <button class="off" type="button">&#10006;</button> </td>
+  <tr>
+</template>
+
 </body>
 </html>
 
