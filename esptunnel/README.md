@@ -13,37 +13,39 @@ usage using command line tools shown
 
   - Enable uart interface (on port 9876 - hardcoded)
       
-      ```curl -u Beaglebone:Beagle1  http://$HOSTNAME/basic_auth &&
-	stty -icanon -echo ;  nc -v $HOSTNAME 9876 ; stty sane```
+      ```
+      curl -u Beaglebone:Beagle1  http://$HOSTNAME/basic_auth &&
+	  stty -icanon -echo ;  nc -v $HOSTNAME 9876 ; stty sane
+      ```
 
 ## Nonauthenticated interfaces
   - Get (json) list of button mappings
 
-    > curl http://$HOSTNAME/buttons.json
+    ``` curl http://$HOSTNAME/buttons.json```
 
   - Update (write new) list of mappings
 
-    > curl --data-binary @esp_filesystem/public/buttons.json http://$HOSTNAME/send
+    ``` curl --data-binary @esp_filesystem/public/buttons.json http://$HOSTNAME/send```
 
   - Run button script now ( valid for every file inside esp_filesystem/buttons )
 
-    > curl -d buttons/oc.on  http://$HOSTNAME/send
+    ``` curl -d buttons/oc.on  http://$HOSTNAME/send```
 
   - add new timer job in 60 seconds:
 
-    > curl -d +60buttons/oc.on  http://$HOSTNAME/send
+    ``` curl -d +60buttons/oc.on  http://$HOSTNAME/send```
 
   - add new timer job in 60 seconds, repeating every 50 seconds:
 
-    > curl -d +60+50buttons/oc.on  http://$HOSTNAME/send
+    ``` curl -d +60+50buttons/oc.on  http://$HOSTNAME/send```
 
   - Query existing timer jobs:
 
-    > curl -d +0  http://$HOSTNAME/send
+    ``` curl -d +0  http://$HOSTNAME/send```
 
   - Delete matching timers (here all oc*):
 
-    > curl -d -buttons/oc  http://$HOSTNAME/send
+    ``` curl -d -buttons/oc  http://$HOSTNAME/send```
 
 ### Timer list
 Every call to the API returns "failure" if a job couldnt be run
