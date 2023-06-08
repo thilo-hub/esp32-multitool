@@ -21,6 +21,8 @@ I use a "hand-wire-wrapped" bread board on the beaglebone (picture). Essentially
  - A simple wifi interface that allows devices like the beaglebone to be reset (gpio-toggle)
      - Obviously have (some) authentication ( for the above uart/reset )
 
+ - an IOS/macos app that shows the buttons available for RF433 
+
 
 # Status
 
@@ -33,6 +35,7 @@ I use a "hand-wire-wrapped" bread board on the beaglebone (picture). Essentially
         esptunnel       - ESP32 firmware that tunnels IP through SPI & UART to a beaglebone
         linux           - The beaglebone side of the tunnel
         rf433           - ESP32 webinterface/uart-interface
+        Apple           - Xcode content for separate App
 
 
  - Currently configured HW/connections
@@ -80,27 +83,29 @@ The ```decode``` tool will configure everything and start.
 Check the short Makefile!!
 
 idf.py  set-target esp32s3
-idf.py menuconfig - check what needs chaning
+idf.py menuconfig - check what needs changing (in particular, there seems to be abuild problem if the web interface is not enabled)
 idf.py build
 idf.py flash
 --OR--
 idf.py  set-target esp32s3
-idf.py menuconfig - check what needs chaning
-make HOST=10.1.1.73
+idf.py menuconfig - check what needs changing
+make HOST=10.1.1.73  ( the Flasher script is not part of the repository )
 
+Caveat:
+  the makefile automatically copies the system.cfg -- so please do this manually
 
 On the target:
 
-
-UPDATE: configuration is now all in system.cfg (see above)
 ```
-protocols bgn
-password NeverTellAnyone
-ssid mySSID
-sta 10.1.1.73 10.1.1.9 255.255.255.0 3500000
+make install
+systemctl start esp32-wifi
 ```
-which describes the esp configuration to connect to the network
 
+When it is not working as "wanted", see the service file for up to date conf.
+
+But essentially, debugging as below should work
+
+The console will print its configuration. Please verify this.
 
 ```
 $ sudo ./decode /dev/ttyS1 tun3
@@ -119,12 +124,13 @@ Starting Wifi
 ```
 Which indicates all is working..
 
-Troubleshooting:
+Troubleshooting :
 ```
  sudo ./decode /dev/ttyS1 tun3
 /sys/class/gpio/gpio117/direction
 Fail 38
 ```
+(not seen for a long time...)
 There seems to be a problem on the beagle io-setup
 Usually running the setup_pin.sh again fixes it..
 
@@ -152,14 +158,14 @@ Once the configuration is installed, the wifi connects automatically and starts 
 
 Button interface:  http://{esp32-hostname}/index.html
 
-The uart and reset button is available if the basic authentication is installed
+The uart and reset API's  are available if the basic authentication is enabled
 
 The server only starts listening AFTER authentication like:
 
-```curl -u Beaglebone:Beagle1  http://beagle1w.nispuk.com/basic_auth```
+```curl -u Beaglebone:Beagle1  http://beaglebone1.nispuk.com/basic_auth```
 
 or
-```curl -u Beaglebone:Beagle1  http://beagle1w.nispuk.com/basic_auth?reset```
+```curl -u Beaglebone:Beagle1  http://beaglebone1.nispuk.com/basic_auth?reset```
 The latter will also toggle the reset-GPIO.
 
 User/Password currently hard coded in configuration... (TODO)
@@ -171,7 +177,7 @@ Success will be greeted with from curl:
 
 The remove-uart interface is now also active:
 
-```stty -icanon && nc beagle1w.nispuk.com 9876 ```
+```stty -icanon && nc beaglebone1.nispuk.com 9876 ```
 
 Gives you an interactive console to the uart...
 

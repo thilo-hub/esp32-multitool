@@ -34,6 +34,7 @@
 #endif
 #include "uart2_io.h"
 #include "utimer.h"
+#include "wifi.h"
 #include "version.h"
 
 static const char *TAG = "multitool";
