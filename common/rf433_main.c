@@ -23,6 +23,7 @@
 #include "hardware.h"
 #include "base64.h"
 #include "spifs.h"
+#include "utimer.h"
 #if CONFIG_RF433
 
 
@@ -181,6 +182,30 @@ send_file(char *file)
 {
 	esp_err_t	rv = ESP_FAIL;
 	char           *buffer = malloc(sizeof(pattern_t));
+#if 0
+	int event_time = 0; // NOW
+	int event_repeat = 0; // NOW
+	// if prefix by +\d+  assume that is the time the job needs to run
+	// if prefix by another +\d+  assume that is the interval to rerun
+	// if prefix by '-' then remove ANY jobs matching the file
+	if (file[0] == '+' ) {
+	    event_time = strtol(file,&file,0);
+	    while(*file == ' ') file++;
+	}
+	if (file[0] == '+' ) {
+	    event_repeat = strtol(file,&file,0);
+	    while(*file == ' ') file++;
+	}
+	if (file[0] == '-' ) {
+	    timerRemoveJobs(file+1);
+	    return ESP_OK;
+	}
+	if ( event_time > 0 ) {
+	    insertTimer(event_time,event_repeat,send_file,file);
+	    return ESP_OK;
+	}
+#endif
+
 	sprintf(buffer, "/data/%s", file);
 	FILE           *fd = fopen(buffer, "r");
 	if (!fd) {

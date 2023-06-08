@@ -16,15 +16,18 @@ struct TimerQueue {
     long event;
     long repeat;
     int  repeat_cnt;
+    timerJob job;
     char cmd[];
 };
 struct TimerQueue *queue = NULL;
 
+
 // input values are in seconds`
-struct TimerQueue *newTimer(long event,long repeat,char *cmd)
+struct TimerQueue *newTimer(long event,long repeat,timerJob job,char *cmd)
 {
     size_t cmd_len = strlen(cmd);
     struct TimerQueue *new=malloc(sizeof(struct TimerQueue)+cmd_len+1);
+    ESP_LOGI(TAG,"New Jobs %ld *+%ld %s\n",event,repeat,cmd);
     if ( !new) {
 	ESP_LOGI(TAG,"Failed allocate %d",sizeof(struct TimerQueue)+cmd_len+1);
 	return NULL;
@@ -33,18 +36,21 @@ struct TimerQueue *newTimer(long event,long repeat,char *cmd)
     repeat = pdMS_TO_TICKS(1000 * repeat);
     event  = pdMS_TO_TICKS(1000 * event);
 
+    new->job = job;
     new->event = event;
     strcpy(new->cmd,cmd);
     new->repeat_cnt = 0; 
 
 #if ENABLE_TIMERBOUNDS 
     // limit repeat to max once per second
-    if (repeat < pdMS_TO_TICKS(1000) ) 
-	repeat = pdMS_TO_TICKS(1000);
-    // make sure there is a limit of 24  events per day
-    // if the repeat time is less than 1h, limit to 24 repeats
-    if (repeat < pdMS_TO_TICKS(3600 * 1000))
-	new->repeat_cnt = 24;
+    if ( repeat > 0) {
+	if (repeat < pdMS_TO_TICKS(1000) ) 
+	    repeat = pdMS_TO_TICKS(1000);
+	// make sure there is a limit of 24  events per day
+	// if the repeat time is less than 1h, limit to 24 repeats
+	if (repeat < pdMS_TO_TICKS(3600 * 1000))
+	    new->repeat_cnt = 24;
+    }
 #endif
     new->repeat=repeat;
     return new;
@@ -74,6 +80,21 @@ struct TimerQueue *removeTimer(struct TimerQueue **pp, int tn)
     return item;
 }
 
+void timerRemoveJobs(char *match)
+{
+    struct TimerQueue **pp = &queue;;
+    while(*pp) {
+	if ( strncmp(match,(*pp)->cmd ,strlen(match)) == 0 ){
+	    struct TimerQueue *next = (*pp)->next;
+	    free(*pp);
+	    *pp  = next;
+	} else {
+	    pp= &(*pp)->next;
+	}
+    }
+}
+
+
 esp_err_t send_file(char *file) ;
 
 void expireTimer(void)
@@ -85,7 +106,7 @@ void expireTimer(void)
 
     // Timer job...
     printf("Fire:  %s (+ %ld)\n",item->cmd,item->repeat);
-    if (send_file(item->cmd) != ESP_OK ){
+    if ( ((*item->job)(item->cmd)) != ESP_OK ){
 	// no point in repeating something that failed...
 	item->repeat = 0;
     }
@@ -101,16 +122,33 @@ void expireTimer(void)
     // Link new item back into queue
     addTimer(item);
 }
+static char *getTimerList(void)
+{
+    struct TimerQueue *p;
+    int n=0;
+    char *rv=malloc(4096);
+    *rv=0;
+
+    TickType_t now = xTaskGetTickCount();
+    // printf("\n======= %ld ========\n",now);
+    for(p=queue ; p ; p=p->next){
+	char *b=NULL;
+	asprintf(&b,"%dE: %ld +%ld :%s\n",n++,p->event-now,p->repeat,p->cmd);
+	if (b) {
+	    rv=reallocf(rv,strlen(rv)+strlen(b)+1);
+	    strcat(rv,b);
+	    free(b);
+	}
+    }
+    return rv;
+}
 static void dmpList(void)
 {
-    struct TimerQueue *p=queue;
-    int n=0;
-    TickType_t now = xTaskGetTickCount();
-    printf("\n======= %ld ========\n",now);
-    for( ; p ; p=p->next){
-	printf("%dE: %ld +%ld :%s\n",n++,p->event,p->repeat,p->cmd);
-	if ( n> 100)
-	    abort();
+    printf("\n===============\n");
+    char *gl=getTimerList();
+    if ( gl ) {
+	printf("%s",gl);
+	free(gl);
     }
 }
 #if 0
@@ -133,17 +171,17 @@ main()
 }
 #endif
 
-MessageBufferHandle_t timerJob=NULL;
+MessageBufferHandle_t timerJobMB=NULL;
 
 static void 
 timerTask(void *)
 {
     TickType_t delay = portMAX_DELAY;
-    timerJob = xMessageBufferCreate( 5*sizeof(struct TimerQueue) );
+    timerJobMB = xMessageBufferCreate( 5*sizeof(struct TimerQueue) );
     while(1) 
     {
 	struct TimerQueue *new;
-	size_t mlen = xMessageBufferReceive( timerJob,
+	size_t mlen = xMessageBufferReceive( timerJobMB,
 				  &new,
 				  sizeof(new),
 				  delay );
@@ -166,7 +204,57 @@ timerTask(void *)
     }
 }
 
+static void insertTimer(long event,long repeat,timerJob job,char *cmd)
+{
+    struct TimerQueue *new;
+    // set to fire in relative from now x seconds
+    new = newTimer(event,repeat,job,cmd);
 
+    if ( !new ) 
+	return ;
+    // printf("Add: %ld %ld %s ",new.event,new.repeat,new.cmd);
+    int res = xMessageBufferSend( timerJobMB,
+		   &new,
+		   sizeof(new),
+		    portMAX_DELAY);
+    if ( res == 0 ) {
+	ESP_LOGI(TAG,"Cannot add timer..");
+	free(new);
+    }
+}
+esp_err_t peek(char *p)
+{
+    ESP_LOGI(TAG,"Run: %s",p);
+    return ESP_OK;
+}
+
+// Queue new 
+char *queueTimerJob(char *descriptor,esp_err_t (*job)(char *args))
+{
+    char *file=descriptor;
+	int event_time = 0; // NOW
+	int event_repeat = 0; // NOW
+	// if prefix by +\d+  assume that is the time the job needs to run
+	// if prefix by another +\d+  assume that is the interval to rerun
+	// if prefix by '-' then remove ANY jobs matching the file
+	if (file[0] == '+' ) {
+	    event_time = strtol(file,&file,0);
+	    while(*file == ' ') file++;
+	}
+	if (file[0] == '+' ) {
+	    event_repeat = strtol(file,&file,0);
+	    while(*file == ' ') file++;
+	}
+	if (file[0] == '-' ) {
+	    timerRemoveJobs(file+1);
+	} else if ( event_time > 0 ) {
+	    insertTimer(event_time,event_repeat,job,file);
+	} else if ( *file && (*job)(file) != ESP_OK) {
+	    return NULL;
+	}
+
+	return getTimerList();
+}
 
 static int cmdTimer(int argc,char **argv)
 {
@@ -177,21 +265,9 @@ static int cmdTimer(int argc,char **argv)
 	    struct TimerQueue *item = removeTimer(&queue,strtol(argv[2],NULL,0));
 	    free(item);
 	} else if ( argc == 5 && strcmp(argv[1],"ins") == 0) {
-	    struct TimerQueue *new;
-	    // set to fire in relative from now x seconds
-	    new = newTimer(strtol(argv[2],NULL,0),strtol(argv[3],NULL,0),argv[4]);
 
-	    if ( !new ) 
-		return 1;
-	    // printf("Add: %ld %ld %s ",new.event,new.repeat,new.cmd);
-	    int res = xMessageBufferSend( timerJob,
-                           &new,
-                           sizeof(new),
-			    portMAX_DELAY);
-	    if ( res == 0 ) {
-		ESP_LOGI(TAG,"Cannot add timer..");
-		free(new);
-	    }
+	    insertTimer( strtol(argv[2],NULL,0),strtol(argv[3],NULL,0),peek,argv[4]);
+
 	}
 return 0;
 }

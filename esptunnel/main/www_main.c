@@ -28,6 +28,7 @@
 #include "uart2_io.h"
 #include "cfg_parse.h"
 #include "wifi.h"
+#include "utimer.h"
 
 #define DEBUG_UPLOAD  // debug interface to send file to: test.html
 #define EXAMPLE_HTTP_QUERY_KEY_MAX_LEN  (64)
@@ -465,11 +466,13 @@ static esp_err_t httpdRf433PostHandler(httpd_req_t *req)
         ESP_LOGI(TAG, "%.*s", ret, buf);
         ESP_LOGI(TAG, "==============%d of %d======================",remaining,ret);
 #if CONFIG_RF433
-	if (send_file(buf) != ESP_OK ){
+	char *res;
+	if ((res=queueTimerJob(buf,send_file)) == NULL ){
 	    httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "File does not exist");
 	    return ESP_FAIL;
 	} else {
-            httpd_resp_send_chunk(req, "OK", HTTPD_RESP_USE_STRLEN);
+            httpd_resp_send_chunk(req, res, HTTPD_RESP_USE_STRLEN);
+	    free(res);
 	}
 #endif
     }
