@@ -1,20 +1,23 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "esp_log.h"
 #include "nvs.h"
 
 #define MAX_UINT32 (0xffffffff)
+const char TAG[]="CFG";
+
 static nvs_handle_t nvs=MAX_UINT32;
 void commit(void)
 {
     nvs_commit(nvs);
 }
 
-static void importDefaultCfg(void)
+int importDefaultCfg(void)
 {
     FILE           *fp = fopen("/data/system.cfg", "r");
     if (fp == NULL) {
-	    return;
+	    return 1;
     }
     char           *cfg = malloc(4096);
     int		l = fread(cfg, 1, 4096, fp);
@@ -30,14 +33,16 @@ static void importDefaultCfg(void)
 		    *p++ = 0;
 		    if ( equal ) {
 			*equal = 0;
-			nvs_set_blob(nvs,tag,equal+1,p-equal);
+			ESP_LOGI(TAG," %s -> %s",tag,equal+1);
+			nvs_set_str(nvs,tag,equal+1);
 			equal = NULL;
-			tag = p;
 		    }
+		    tag = p;
 	    }
     }
     nvs_commit(nvs);
     free(cfg);
+    return 0;
 }
 char           *
 getCfg(const char *tag)
@@ -52,10 +57,10 @@ getCfg(const char *tag)
     if (nvs != MAX_UINT32 ) {
 	char *value=NULL;
 	size_t l=0;
-	esp_err_t err = nvs_get_blob(nvs, tag, NULL, &l);
+	esp_err_t err = nvs_get_str(nvs, tag, NULL, &l);
 	if (err == ESP_OK && l>0){
 	    value = malloc(l);
-	    err = nvs_get_blob(nvs, tag, value,&l);
+	    err = nvs_get_str(nvs, tag, value,&l);
 	    if ( err == ESP_OK )
 		return value;
 	}
