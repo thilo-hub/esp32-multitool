@@ -33,6 +33,7 @@
 #include "wifi_comm.h"
 #endif
 #include "uart2_io.h"
+#include "utimer.h"
 #include "version.h"
 
 static const char *TAG = "multitool";
@@ -153,6 +154,9 @@ app_main(void)
 #if CONFIG_WIFI_TUNNEL
 	registerWifitun();
 #endif
+
+	registerTimer();
+
 #if CONFIG_WEBSERVER
 	registerHttpdServer();
 #endif
