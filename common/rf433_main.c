@@ -20,14 +20,15 @@
 #include "esp_console.h"
 //
 #include <sys/dirent.h>
+#include "hardware.h"
 #include "base64.h"
 #include "spifs.h"
 #if CONFIG_RF433
 
 
 
-#define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_OUTPUT_IO_0) )
-#define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0) )
+#define GPIO_OUTPUT_PIN_SEL  ((1ULL<<CONFIG_GPIO_RF433_TX) )
+#define GPIO_INPUT_PIN_SEL  ((1ULL<<CONFIG_GPIO_RF433_RX) )
 #define ESP_INTR_FLAG_DEFAULT 0
 
 static const char *TAG = "rf433";
@@ -56,7 +57,7 @@ gpio_isr_handler(void *arg)
 	unsigned long long count = 0;
 
 	ESP_ERROR_CHECK(gptimer_get_raw_count(gptimer, &count));
-	uint32_t	level = gpio_get_level(GPIO_INPUT_IO_0);
+	uint32_t	level = gpio_get_level(CONFIG_GPIO_RF433_RX);
 
 	//, -----------------------------------,, ------------
 		//'                                   '-- -- -----------'
@@ -100,7 +101,7 @@ gpio_isr_handler(void *arg)
 			// overflow
 			// reset pattern capture...
 			// capture.c[0] = 0;
-		gpio_isr_handler_remove(GPIO_INPUT_IO_0);
+		gpio_isr_handler_remove(CONFIG_GPIO_RF433_RX);
 	}
 }
 
@@ -138,8 +139,8 @@ cmd_capture(int argc, char **argv)
 	printf("Start Capturing\n");
 
 	capture.c[0] = 0;
-	gpio_set_level(GPIO_OUTPUT_IO_0, 0);
-	gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void *)GPIO_INPUT_IO_0);
+	gpio_set_level(CONFIG_GPIO_RF433_TX, 0);
+	gpio_isr_handler_add(CONFIG_GPIO_RF433_RX, gpio_isr_handler, (void *)CONFIG_GPIO_RF433_RX);
 	ESP_ERROR_CHECK(gptimer_enable(gptimer));
 	//init->enable
 		ESP_ERROR_CHECK(gptimer_start(gptimer));
@@ -153,8 +154,8 @@ cmd_stop(int argc, char **argv)
 	if (!capture_running)
 		return 1;
 	capture_running = 0;
-	gpio_isr_handler_remove(GPIO_INPUT_IO_0);
-	gpio_set_level(GPIO_OUTPUT_IO_0, 0);
+	gpio_isr_handler_remove(CONFIG_GPIO_RF433_RX);
+	gpio_set_level(CONFIG_GPIO_RF433_TX, 0);
 	ESP_ERROR_CHECK(gptimer_stop(gptimer));
 	//run->enable
 		ESP_ERROR_CHECK(gptimer_disable(gptimer));
@@ -286,7 +287,7 @@ setup_hw(void)
 	io_conf.pull_up_en = 1;
 	gpio_config(&io_conf);
 
-	gpio_set_level(GPIO_OUTPUT_IO_0, 0);
+	gpio_set_level(CONFIG_GPIO_RF433_TX, 0);
 
 	//gpio_evt_queue = xQueueCreate(30, sizeof(capture_t));
 	//assert(gpio_evt_queue != NULL);

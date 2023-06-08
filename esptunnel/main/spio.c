@@ -20,6 +20,7 @@
 
 //#include <unistd.h>
 
+#include "hardware.h"
 #include "checksum.h"
 #include <freertos/ringbuf.h>
 

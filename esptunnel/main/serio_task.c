@@ -1,5 +1,6 @@
 #include <driver/gpio.h>
 #include <driver/uart.h>
+#include "hardware.h"
 #include "serio.h"
 static long	uart_rsum = 0;
 static long	uart_rerr = 0;

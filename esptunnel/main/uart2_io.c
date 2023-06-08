@@ -7,11 +7,10 @@
 #include "esp_log.h"
 #include "esp_console.h"
 #include "freertos/queue.h"
+#include "hardware.h"
 #include "serio.h"
 #if CONFIG_UARTCON_ENABLE
 
-#define CONFIG_GPIO_UARTCON_RTS  14
-#define CONFIG_GPIO_UARTCON_CTS  15
 
 #define CONFIG_EXAMPLE_IPV4 1
 

@@ -1,8 +1,4 @@
 
-#define GPIO_OUTPUT_IO_0    CONFIG_GPIO_RF433_TX
-#define GPIO_INPUT_IO_0     CONFIG_GPIO_RF433_RX
-
-
 typedef struct __attribute__((__packed__)) {
 	uint16_t lkup[8];
 	uint16_t cnt;

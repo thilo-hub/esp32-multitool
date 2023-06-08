@@ -24,6 +24,7 @@
 #include "driver/gpio.h"
 #include <esp_http_server.h>
 #include <string.h>
+#include "hardware.h"
 #include "uart2_io.h"
 #include "cfg_parse.h"
 #include "wifi.h"

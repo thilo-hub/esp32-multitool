@@ -14,6 +14,7 @@
 #include <freertos/task.h>
 #include <lwip/raw.h>
 #include <nvs_flash.h>
+#include "hardware.h"
 #include "serio.h"
 #include "console.h"
 #include "wifi_comm.h"

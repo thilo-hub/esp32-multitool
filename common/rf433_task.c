@@ -8,6 +8,7 @@
 #include "driver/gpio.h"
 #include "driver/gptimer.h"
 
+#include "hardware.h"
 #include "rf433.h"
 
 #if CONFIG_RF433
@@ -54,7 +55,7 @@ send_pattern(gptimer_handle_t timer, const gptimer_alarm_event_data_t * edata, v
 			xTaskNotifyFromISR(task_to_notify, edata->alarm_value, eSetValueWithOverwrite, &high_task_wakeup);
 		}
 	}
-	gpio_set_level(GPIO_OUTPUT_IO_0, level);
+	gpio_set_level(CONFIG_GPIO_RF433_TX, level);
 	return high_task_wakeup == pdTRUE;
 }
 
@@ -66,8 +67,8 @@ rf433_message_task(void *arg)
 	for (;;) {
 		if (xQueueReceive(rf433_msg_queue, &pat_send, portMAX_DELAY)) {
 			//start sending and wait for confirmation
-				gpio_isr_handler_remove(GPIO_INPUT_IO_0);
-			gpio_set_level(GPIO_OUTPUT_IO_0, 0);
+				gpio_isr_handler_remove(CONFIG_GPIO_RF433_RX);
+			gpio_set_level(CONFIG_GPIO_RF433_TX, 0);
 
 			//Assume timer is in init state !
 				//Setup sending..
