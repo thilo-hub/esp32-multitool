@@ -13,6 +13,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include <freertos/ringbuf.h>
 
 #include "esp_log.h"
 #include "driver/spi_slave.h"
@@ -22,7 +23,6 @@
 
 #include "hardware.h"
 #include "checksum.h"
-#include <freertos/ringbuf.h>
 
 #include "hw_config.h"
 #if CONFIG_SPIO_ENABLED
